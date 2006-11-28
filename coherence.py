@@ -5,27 +5,26 @@
 
 # Copyright 2006, Frank Scholz <coherence@beebits.net>
 
-from twisted.internet import task, address
-from twisted.internet import reactor
-
 import os
+import string
+import socket
+
 from zope.interface import implements, Interface
 from twisted.python import log, filepath, util
 from twisted.python.components import registerAdapter
+from twisted.internet import task, address
+from twisted.internet import reactor
 from nevow import athena, inevow, loaders, tags, static
 from twisted.web import resource
 
 import louie
 
-import service
+from coherence.upnp.core import service
 
-from ssdp import SSDPServer
-from msearch import MSearch
-from device import Device, RootDevice
-from utils import parse_xml
-
-import string
-import socket
+from coherence.upnp.core.ssdp import SSDPServer
+from coherence.upnp.core.msearch import MSearch
+from coherence.upnp.core.device import Device, RootDevice
+from coherence.upnp.core.utils import parse_xml
 
 class IWeb(Interface):
 
@@ -149,7 +148,7 @@ class Coherence:
     
         # are we supposed to start a ControlPoint?
         try:
-            from control_point import ControlPoint
+            from coherence.upnp.devices.control_point import ControlPoint
             #ControlPoint( self)
         except ImportError:
             print "Can't enable ControlPoint functions, sub-system not available."
@@ -157,7 +156,7 @@ class Coherence:
         
         # are we supposed to start a MediaServer?
         try:
-            from media_server import MediaServer
+            from coherence.upnp.devices.media_server import MediaServer
             MediaServer( self,version=2)
         except ImportError:
             print "Can't enable MediaServer functions, sub-system not available."
@@ -165,7 +164,7 @@ class Coherence:
 
         # are we supposed to start a MediaRenderer?
         try:
-            from media_renderer import MediaRenderer
+            from coherence.upnp.devices.media_renderer import MediaRenderer
             #MediaRenderer( self)
         except ImportError:
             print "Can't enable MediaRenderer functions, sub-system not available."

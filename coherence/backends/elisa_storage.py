@@ -8,8 +8,8 @@ import re
 from twisted.spread import pb
 from twisted.internet import reactor
 
-from DIDLLite import classChooser, Container, Resource, DIDLElement
-from soap_service import errorCode
+from coherence.upnp.core.DIDLLite import classChooser, Container, Resource, DIDLElement
+from coherence.upnp.core.soap_service import errorCode
 
 class ElisaMediaStore:
 
@@ -34,7 +34,7 @@ class ElisaMediaStore:
             size = in bytes (OPTIONAL)
     """
 
-#    def __init__(self, name, host, urlbase, ignore_patterns):
+    def __init__(self, name, host, urlbase, ignore_patterns):
         self.name = name
         self.host = host
         if urlbase[len(urlbase)-1] != '/':

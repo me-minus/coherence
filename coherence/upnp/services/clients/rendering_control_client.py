@@ -3,11 +3,6 @@
 
 # Copyright 2006, Frank Scholz <coherence@beebits.net>
 
-from twisted.internet import reactor, defer
-from twisted.python import log
-import sys, threading
-import DIDLLite, utils
-
 class RenderingControlClient:
 
     def __init__(self, service):

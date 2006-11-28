@@ -3,9 +3,9 @@
 
 # Copyright 2006, Frank Scholz <coherence@beebits.net>
 
-from connection_manager_client import ConnectionManagerClient
-from content_directory_client import ContentDirectoryClient
-from av_transport_client import AVTransportClient
+from coherence.upnp.services.clients.connection_manager_client import ConnectionManagerClient
+from coherence.upnp.services.clients.content_directory_client import ContentDirectoryClient
+from coherence.upnp.services.clients.av_transport_client import AVTransportClient
 
 class MediaServerClient:
 

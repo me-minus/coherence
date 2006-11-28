@@ -8,7 +8,9 @@ import SOAPpy
 from twisted.web import soap
 from twisted.web import client
 
-from elementsoap.ElementSOAP import SoapRequest, SoapElement, NS_SOAP_ENV, soap_namespaces, decode
+from coherence.extern.elementsoap.ElementSOAP import SoapRequest, SoapElement
+from coherence.extern.elementsoap.ElementSOAP import NS_SOAP_ENV, soap_namespaces, decode
+
 from elementtree.ElementTree import tostring, Element, SubElement
 from elementtree import ElementTree
 

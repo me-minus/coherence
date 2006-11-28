@@ -9,9 +9,9 @@ from twisted.web import xmlrpc, resource, static
 
 from elementtree.ElementTree import Element, SubElement, ElementTree, tostring
 
-from connection_manager_server import ConnectionManagerServer
-from rendering_control_server import RenderingControlServer
-from av_transport_server import AVTransportServer
+from coherence.upnp.services.servers.connection_manager_server import ConnectionManagerServer
+from coherence.upnp.services.servers.rendering_control_server import RenderingControlServer
+from coherence.upnp.services.servers.av_transport_server import AVTransportServer
 
 class MRRoot(resource.Resource):
 
@@ -97,7 +97,7 @@ class RootDeviceXML(static.Data):
 class MediaRenderer:
 
     def __init__(self, coherence, version=2):
-        from uuid import UUID
+        from coherence.upnp.core.uuid import UUID
         self.coherence = coherence
         self.device_type = 'MediaRenderer'
         self.version = version

@@ -3,21 +3,21 @@
 
 # Copyright 2006, Frank Scholz <coherence@beebits.net>
 
+import string
+
 from twisted.internet import task
 from twisted.internet import reactor
 from twisted.web import xmlrpc
 
-import service
-from event import EventServer
+from coherence.upnp.core import service
+from coherence.upnp.core.event import EventServer
 
-from media_server_client import MediaServerClient
-from media_renderer_client import MediaRendererClient
+from coherence.upnp.devices.media_server_client import MediaServerClient
+from coherence.upnp.devices.media_renderer_client import MediaRendererClient
 
-from utils import parse_xml
+from coherence.upnp.core.utils import parse_xml
 
 import louie
-
-import string
 
 class ControlPoint:
 
@@ -197,8 +197,8 @@ def startXMLRPC( control_point, port):
                     
 if __name__ == '__main__':
 
-    from media_server_client import MediaServerClient
-    from media_renderer_client import MediaRendererClient
+    from coherence.upnp.devices.media_server_client import MediaServerClient
+    from coherence.upnp.devices.media_renderer_client import MediaRendererClient
 
     ctrl = ControlPoint()
 

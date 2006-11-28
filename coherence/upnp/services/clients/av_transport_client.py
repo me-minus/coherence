@@ -1,14 +1,7 @@
-# Elisa - Home multimedia server
-# Copyright (C) 2006 Fluendo, S.A. (www.fluendo.com).
 # Licensed under the MIT license
 # http://opensource.org/licenses/mit-license.php
 
 # Copyright 2006, Frank Scholz <coherence@beebits.net>
-
-from twisted.internet import reactor, defer
-from twisted.python import log
-import sys, threading
-import DIDLLite, utils
 
 class AVTransportClient:
 

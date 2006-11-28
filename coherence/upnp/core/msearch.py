@@ -8,7 +8,7 @@ from twisted.internet.protocol import DatagramProtocol
 from twisted.internet import reactor
 from twisted.internet import task
 
-import utils
+from coherence.upnp.core import utils
 
 SSDP_PORT = 1900
 SSDP_ADDR = '239.255.255.250'

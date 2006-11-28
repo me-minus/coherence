@@ -15,13 +15,13 @@ from twisted.python import log, failure, util
 
 from elementtree.ElementTree import Element, SubElement, ElementTree, tostring
 
-from connection_manager_server import ConnectionManagerServer
-from content_directory_server import ContentDirectoryServer
-from media_receiver_registrar_server import MediaReceiverRegistrarServer
-from media_receiver_registrar_server import FakeMediaReceiverRegistrarBackend
+from coherence.upnp.services.servers.connection_manager_server import ConnectionManagerServer
+from coherence.upnp.services.servers.content_directory_server import ContentDirectoryServer
+from coherence.upnp.services.servers.media_receiver_registrar_server import MediaReceiverRegistrarServer
+from coherence.upnp.services.servers.media_receiver_registrar_server import FakeMediaReceiverRegistrarBackend
 
-from fs_storage import FSStore
-from elisa_storage import ElisaMediaStore
+from coherence.backends.fs_storage import FSStore
+from coherence.backends.elisa_storage import ElisaMediaStore
 
 class MSRoot(resource.Resource):
 
@@ -141,7 +141,7 @@ class MediaServer:
         self.coherence = coherence
         self.device_type = 'MediaServer'
         self.version = version
-        from uuid import UUID
+        from coherence.upnp.core.uuid import UUID
         self.uuid = UUID()
         self.store = None
         urlbase = self.coherence.urlbase
@@ -151,7 +151,8 @@ class MediaServer:
 
         print 'MediaServer urlbase', urlbase
 
-        p = 'content'
+        p = 'tests/content'
+
         
         """ this could take some time, put it in a  thread to be sure it doesn't block
             as we can't tell for sure that every backend is implemented properly """

@@ -8,8 +8,8 @@ import cElementTree
 import urllib2
 import time
 
-from service import Service
-import utils
+from coherence.upnp.core.service import Service
+from coherence.upnp.core import utils
 
 import louie
 

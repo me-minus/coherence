@@ -1,8 +1,6 @@
 # Licensed under the MIT license
 # http://opensource.org/licenses/mit-license.php
 
-# Copyright 2005, Tim Potter <tpot@samba.org>
-# Copyright 2006 John-Mark Gurney <gurney_j@resnet.uoregon.edu>
 # Copyright 2006, Frank Scholz <coherence@beebits.net>
 
 # Content Directory service
@@ -14,9 +12,9 @@ from twisted.python import reflect
 
 from elementtree.ElementTree import Element, SubElement, ElementTree, tostring
 
-from soap_service import UPnPPublisher
+from coherence.upnp.core.soap_service import UPnPPublisher
 
-import service
+from coherence.upnp.core import service
 
 class FakeMediaReceiverRegistrarBackend:
 

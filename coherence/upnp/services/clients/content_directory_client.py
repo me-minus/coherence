@@ -4,10 +4,13 @@
 # Copyright (C) 2006 Fluendo, S.A. (www.fluendo.com).
 # Copyright 2006, Frank Scholz <coherence@beebits.net>
 
+import sys, threading
+
 from twisted.internet import reactor, defer
 from twisted.python import log
-import sys, threading
-import DIDLLite, utils
+
+from coherence.upnp.core import DIDLLite
+from coherence.upnp.core import utils
 
 global work, pending
 work = []

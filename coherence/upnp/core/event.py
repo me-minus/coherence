@@ -4,16 +4,15 @@
 # Copyright (C) 2006 Fluendo, S.A. (www.fluendo.com).
 # Copyright 2006, Frank Scholz <coherence@beebits.net>
 
+import platform
+import time
+from urlparse import urlsplit
 
 from twisted.internet import reactor
 from twisted.web import resource, server
 from twisted.internet.protocol import Protocol, ClientCreator
 
-import platform
-import time
-import utils
-
-from urlparse import urlsplit
+from coherence.upnp.core import utils
 
 global hostname, web_server_port
 hostname = None

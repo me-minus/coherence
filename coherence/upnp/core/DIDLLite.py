@@ -24,7 +24,7 @@ except ImportError:
     import elementtree
     elementtree.ElementTree._namespace_map.update(my_namespaces)
 
-import utils
+from coherence.upnp.core import utils
 
 def classChooser(mimetype):
 

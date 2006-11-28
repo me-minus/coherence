@@ -4,7 +4,11 @@
 # Copyright (C) 2006 Fluendo, S.A. (www.fluendo.com).
 # Copyright 2006, Frank Scholz <coherence@beebits.net>
 
-import service
+from coherence.upnp.core import utils
+try:
+    from coherence.upnp.core import service
+except ImportError:
+    import service
 
 class StateVariable:
 

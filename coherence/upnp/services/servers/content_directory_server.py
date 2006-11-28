@@ -14,9 +14,9 @@ from twisted.python import reflect
 
 from elementtree.ElementTree import Element, SubElement, ElementTree, tostring
 
-from soap_service import UPnPPublisher
+from coherence.upnp.core.soap_service import UPnPPublisher
 
-import service
+from coherence.upnp.core import service
 
 class ContentDirectoryControl(service.ServiceControl,UPnPPublisher):
 

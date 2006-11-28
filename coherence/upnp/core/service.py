@@ -7,20 +7,20 @@
 import cElementTree
 import time
 import urllib2
-import action
-import event
-import variable
-import utils
+from coherence.upnp.core import action
+from coherence.upnp.core import event
+from coherence.upnp.core import variable
 
-from soap_proxy import SOAPProxy
-from soap_service import errorCode
+from coherence.upnp.core import utils
+from coherence.upnp.core.soap_proxy import SOAPProxy
+from coherence.upnp.core.soap_service import errorCode
+from coherence.upnp.core.event import EventSubscriptionServer
 
-from event import EventSubscriptionServer
 from elementtree.ElementTree import Element, SubElement, ElementTree, parse, tostring
 
 from twisted.web import static
 from twisted.internet import defer
-from twisted.python import log, failure
+from twisted.python import log, failure, util
 from twisted.internet import task
 
 import louie
@@ -380,7 +380,8 @@ class Server:
         self.set_variable(0, 'CurrentConnectionIDs', '0')
         
     def init_var_and_actions(self):
-        tree = parse('xml-service-descriptions/%s%d.xml' % (self.id, self.version))
+        desc_file = util.sibpath(__file__, 'xml-service-descriptions/%s%d.xml' % (self.id, self.version))
+        tree = parse(desc_file)
         
         for action_node in tree.findall('.//action'):
             name = action_node.findtext('name')
