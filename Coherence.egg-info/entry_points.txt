@@ -1,0 +1,15 @@
+
+        [coherence.plugins.backend.media_server]
+        FSStore = coherence.backends.fs_storage:FSStore
+        MediaStore = coherence.backends.mediadb_storage:MediaStore
+        ElisaMediaStore = coherence.backends.elisa_storage:ElisaMediaStore
+        FlickrStore = coherence.backends.flickr_storage:FlickrStore
+        AxisCamStore = coherence.backends.axiscam_storage:AxisCamStore
+        BuzztardStore = coherence.backends.buzztard_control:BuzztardStore
+
+        [coherence.plugins.backend.media_renderer]
+        ElisaPlayer = coherence.backends.elisa_renderer:ElisaPlayer
+        GStreamerPlayer = coherence.backends.gstreamer_audio_player:GStreamerPlayer
+        BuzztardPlayer = coherence.backends.buzztard_control:BuzztardPlayer
+
+    
