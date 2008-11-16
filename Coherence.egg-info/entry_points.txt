@@ -11,10 +11,11 @@
         AmpacheStore = coherence.backends.ampache_storage:AmpacheStore
         TrackerStore = coherence.backends.tracker_storage:TrackerStore
         DVBDStore = coherence.backends.dvbd_storage:DVBDStore
+        AppleTrailersStore = coherence.backends.appletrailers_storage:AppleTrailersStore
 
         [coherence.plugins.backend.media_renderer]
         ElisaPlayer = coherence.backends.elisa_renderer:ElisaPlayer
-        GStreamerPlayer = coherence.backends.gstreamer_audio_player:GStreamerPlayer
+        GStreamerPlayer = coherence.backends.gstreamer_renderer:GStreamerPlayer
         BuzztardPlayer = coherence.backends.buzztard_control:BuzztardPlayer
 
         [coherence.plugins.backend.binary_light]
