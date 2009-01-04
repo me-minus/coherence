@@ -1,0 +1,24 @@
+Metadata-Version: 1.0
+Name: UPnP-Inspector
+Version: 0.1.6
+Summary: UPnP Device and Service analyzer
+Home-page: http://coherence.beebits.net
+Author: Frank Scholz
+Author-email: coherence@beebits.net
+License: MIT
+Download-URL: http://coherence.beebits.net/download/UPnP-Inspector-0.1.6.tar.gz
+Description: UPnP-Inspector is an UPnP Device and Service analyzer,
+        based on the Coherence DLNA/UPnP framework.
+        
+        Loosely modeled after the Intel UPnP Device Spy and the UPnP Test Tool.
+        
+Keywords: UPnP,DLNA
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: X11 Applications :: Gnome
+Classifier: Environment :: X11 Applications :: GTK
+Classifier: Environment :: Win 32 (MS Windows)
+Classifier: Environment :: MacOS X
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
