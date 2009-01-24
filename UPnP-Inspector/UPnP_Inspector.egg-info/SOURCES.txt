@@ -1,10 +1,10 @@
+LICENCE
 MANIFEST.in
 README
 setup.py
 UPnP_Inspector.egg-info/PKG-INFO
 UPnP_Inspector.egg-info/SOURCES.txt
 UPnP_Inspector.egg-info/dependency_links.txt
-UPnP_Inspector.egg-info/entry_points.txt
 UPnP_Inspector.egg-info/requires.txt
 UPnP_Inspector.egg-info/top_level.txt
 bin/upnp-inspector
@@ -15,6 +15,7 @@ upnp_inspector/details.py
 upnp_inspector/devices.py
 upnp_inspector/events.py
 upnp_inspector/extract.py
+upnp_inspector/log.py
 upnp_inspector/mediaserver.py
 upnp_inspector/icons/audio-x-generic.png
 upnp_inspector/icons/camera-web.png
@@ -25,6 +26,7 @@ upnp_inspector/icons/inspector-logo.png
 upnp_inspector/icons/media-renderer.png
 upnp_inspector/icons/network-light.png
 upnp_inspector/icons/network-server.png
+upnp_inspector/icons/printer.png
 upnp_inspector/icons/upnp-action-arg-in.png
 upnp_inspector/icons/upnp-action-arg-out.png
 upnp_inspector/icons/upnp-action.png
