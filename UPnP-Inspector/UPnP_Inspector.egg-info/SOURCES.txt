@@ -1,5 +1,7 @@
+ChangeLog
 LICENCE
 MANIFEST.in
+NEWS
 README
 setup.py
 UPnP_Inspector.egg-info/PKG-INFO

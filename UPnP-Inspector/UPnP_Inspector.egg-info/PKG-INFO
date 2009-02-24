@@ -1,18 +1,16 @@
 Metadata-Version: 1.0
 Name: UPnP-Inspector
-Version: 0.1.9
+Version: 0.2.1
 Summary: UPnP Device and Service analyzer
 Home-page: http://coherence.beebits.net/wiki/UPnP-Inspector
 Author: Frank Scholz
 Author-email: coherence@beebits.net
 License: MIT
-Download-URL: http://coherence.beebits.net/download/UPnP-Inspector-0.1.9.tar.gz
+Download-URL: http://coherence.beebits.net/download/UPnP-Inspector-0.2.1.tar.gz
 Description: UPnP-Inspector is an UPnP Device and Service analyzer,
         based on the Coherence DLNA/UPnP framework.
         
         Loosely modeled after the Intel UPnP Device Spy and the UPnP Test Tool.
-        
-        This is the initial release.
         
         Features:
         
@@ -21,6 +19,13 @@ Description: UPnP-Inspector is an UPnP Device and Service analyzer,
         * extract UPnP device- and service-description xml-files
         * follow and analyze events
         * interact with well-known devices, e.g. browse the ContentDirectory of an UPnP A/V MediaServer and inspect its containers and items
+        
+        This 0.2.0 - Good Morning, Starshine - release includes
+        
+        * a log-window for SSDP messages
+        * more information (DLNA class and capabilites, icons) in the devices details-window
+        * the MediaServer browse-window now reacts on ContainerUpdateIds changes
+        
         
 Keywords: UPnP,DLNA
 Platform: UNKNOWN
