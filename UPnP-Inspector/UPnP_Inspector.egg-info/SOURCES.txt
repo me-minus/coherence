@@ -18,6 +18,7 @@ upnp_inspector/devices.py
 upnp_inspector/events.py
 upnp_inspector/extract.py
 upnp_inspector/log.py
+upnp_inspector/mediarenderer.py
 upnp_inspector/mediaserver.py
 upnp_inspector/icons/audio-x-generic.png
 upnp_inspector/icons/camera-web.png
