@@ -10,6 +10,8 @@ UPnP_Inspector.egg-info/dependency_links.txt
 UPnP_Inspector.egg-info/requires.txt
 UPnP_Inspector.egg-info/top_level.txt
 bin/upnp-inspector
+misc/inspector.xpm
+misc/upnp-inspector.desktop
 upnp_inspector/__init__.py
 upnp_inspector/about.py
 upnp_inspector/base.py
@@ -49,3 +51,8 @@ upnp_inspector/icons/upnp-device.png
 upnp_inspector/icons/upnp-service.png
 upnp_inspector/icons/upnp-state-variable.png
 upnp_inspector/icons/video-x-generic.png
+win32/compile.py
+win32/inspector-icon.ico
+win32/inspector_build.txt
+win32/upnp-inspector.py
+win32/win32.nsi
