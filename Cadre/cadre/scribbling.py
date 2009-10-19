@@ -8,6 +8,8 @@ import os
 # Twisted
 from twisted.internet import reactor
 
+from coherence import log
+
 # Clutter
 import clutter
 from clutter import cogl
@@ -87,7 +89,9 @@ class TextureReflection (clutter.Clone):
         cogl.pop_matrix()
 
 
-class Canvas(object):
+class Canvas(log.Loggable):
+
+    logCategory = 'canvas'
 
     def __init__(self, fullscreen=1):
         self.fullscreen = fullscreen
@@ -134,11 +138,13 @@ class Canvas(object):
     def show_image(self,image,title=''):
         #FIXME - we have the image as data already, there has to be
         #        a better way to get it into the texture
+        self.warning("show image %r" % title)
         from tempfile import mkstemp
         fp,filename = mkstemp()
         os.write(fp,image)
         os.close(fp)
         #self.texture.set_load_async(True)
+        self.warning("loading image from file %r" % filename)
         self.texture.set_from_file(filename=filename)
         self.set_title(title)
         os.unlink(filename)

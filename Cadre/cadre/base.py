@@ -26,7 +26,7 @@ class Cadre(log.Loggable):
         self.canvas = Canvas(fullscreen)
 
         config = {}
-        config['logmode'] = 'error'
+        config['logmode'] = 'warning'
         config['controlpoint'] = 'yes'
 
         louie.connect(self.media_server_found, 'Coherence.UPnP.ControlPoint.MediaServer.detected', louie.Any)
