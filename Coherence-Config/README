@@ -1,0 +1,17 @@
+Coherence-Config 0.0.1
+Coherence-Config is a cross-platform GUI frontend for Coherence, a DLNA/UPnP server. It is written in Python and relies on QT4 through the PyQT4 bindings for its GUI.
+
+Coherence-Config is still extremely young and requires a lot of effort before it can be considered stable.
+
+
+Dependencies:
+Python - Coherence-Config is written in Python and requires it to run. It has only been tested with Python 2.6.
+
+PyQt4 - PyQt4 powers Coherence-Config's UI. It can be found at www.riverbankcomputing.co.uk. Many Linux distros such as Ubuntu and Debian have PyQt4 in their default repositories and can be downloaded with apt-get
+
+Daemon - Coherence-Config uses daemon to start/stop the Coherence UPNP server. It can be found at http://www.libslack.org/daemon
+
+Coherence - Ironically, Coherence doesn't have to be installed in order for Coherence-Config to function. However, you will obviously be unable to start the service. You can still use it to generate XML configuration files.
+
+
+
