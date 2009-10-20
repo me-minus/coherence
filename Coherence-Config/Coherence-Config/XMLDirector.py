@@ -23,7 +23,7 @@ class XMLDirector:
             self.tree = ET.parse(self.configFileLocation)
         except ExpatError:
             message = "The Coherence configuration file located in your home folder is not valid.\
-            Would you like to replace it with a valid configuration?"
+            \nWould you like to replace it with a valid configuration?"
             action = QtGui.QMessageBox.critical(None, "Invalid XML Configuration", message, QtGui.QMessageBox.Yes, 
                                                 QtGui.QMessageBox.No)
             
@@ -49,23 +49,20 @@ class XMLDirector:
         folders = []
         contents = self.getBackendElement("FSStore")
         
-        if contents.get("active") == "yes":
-            isActive = True
-        else:
-            isActive = False
+        isActive = True if contents.get("active") == "yes" else False
         
         for i in contents:
             if i.tag == "content":
                 folders.append(i.text)
                 
-        return folders, isActive
+        return {'contentList':folders, 'isActive':isActive}
     
-    def writeLocalContentList(self, contentList, isActive):
+    def writeLocalContentList(self, settings):
         #find the FSStore content -- Store in external list to prevent looping quirks, re
         contents = self.getBackendElement("FSStore")
         ContentToRemove = []
         
-        contents.set("active", isActive)
+        contents.set("active", settings['isActive'])
     
         #Queue the <content> to remove
         for i in contents:
@@ -77,6 +74,7 @@ class XMLDirector:
             contents.remove(i)
             
         #Add the new content list to the XML
+        contentList = settings['contentList']
         for i in contentList:
             tempE = ET.fromstring("<content>"+str(i)+"</content>")
             contents.insert(0,tempE)
@@ -89,10 +87,18 @@ class XMLDirector:
         dBusElement = self.tree.find(".//use_dbus")
         webUIElement = self.tree.find(".//web-ui")
         controlElement = self.tree.find(".//controlpoint")
+        serverPortElement = self.tree.find(".//serverport")
+        interfaceElement = self.tree.find(".//interface")
 
-        dBusElement.text="yes" if settings['dbus'] else "no"
-        webUIElement.text="yes" if settings['webui'] else "no"
-        controlElement.text="yes" if settings['control'] else "no"
+        dBusElement.text= "yes" if settings['dbus'] else "no"
+        webUIElement.text= "yes" if settings['webui'] else "no"
+        controlElement.text= "yes" if settings['control'] else "no"
+        serverPortElement.text= settings['serverport']
+        
+        interfaceElement.set("active","yes" if settings['interfaceActive'] else "no")
+        interfaceElement.text= settings['interfaceName']
+        
+        
         
         self.tree.write(self.configFileLocation)
     
@@ -100,12 +106,19 @@ class XMLDirector:
         dBusElement = self.tree.find(".//use_dbus")
         webUIElement = self.tree.find(".//web-ui")
         controlElement = self.tree.find(".//controlpoint")
+        serverPortElement = self.tree.find(".//serverport")
+        interfaceElement = self.tree.find(".//interface")
         
         dbus = True if dBusElement.text=="yes" else False
         webui = True if webUIElement.text=="yes" else False
         control = True if controlElement.text=="yes" else False
+        serverport = serverPortElement.text
+        interfaceActive = True if interfaceElement.get("active") == "yes" else False
+        interfaceName = interfaceElement.text
         
-        settings = {'dbus':dbus, 'webui':webui, 'control':control}
+
+        settings = {'dbus':dbus, 'webui':webui, 'control':control, 'serverport':serverport,
+                    'interfaceActive': interfaceActive, 'interfaceName': interfaceName}
         return settings
         
     def generateXMLConfiguration(self):

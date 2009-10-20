@@ -8,7 +8,6 @@ class MediaConfigPanel(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
         
-        
         #default size = 490 x 350
         
         #Sharing checkbox
@@ -30,7 +29,6 @@ class MediaConfigPanel(QtGui.QWidget):
         self.applyButton.setIcon(QtGui.QIcon("Icons/apply.png"))
         self.applyButton.resize(150,30)
         self.connect(self.applyButton, QtCore.SIGNAL("clicked()"), self.saveChanges)
-        self.applyButton.setEnabled(False)
         
         #Add Button
         self.addButton = QtGui.QPushButton("Add Folder", self)
@@ -46,10 +44,11 @@ class MediaConfigPanel(QtGui.QWidget):
         
        
     #Update Ui state
-    def initializeState(self, folderList, isActive):
+    def initializeState(self, settings):
         
-        self.enabledCheckbox.setChecked(isActive)
+        self.enabledCheckbox.setChecked(settings['isActive'])
         
+        folderList = settings['contentList']
         #setup the content
         for i in folderList:
             exactFolderName = i.split("/")[-1]
@@ -69,8 +68,6 @@ class MediaConfigPanel(QtGui.QWidget):
         if confirm == QtGui.QMessageBox.Yes:
             item = self.mediaList.takeItem(self.mediaList.currentRow())
             item = None
-            
-        self.applyButton.setEnabled(True)
                 
    
     def addFolder(self):
@@ -88,29 +85,25 @@ class MediaConfigPanel(QtGui.QWidget):
         item = QtGui.QListWidgetItem(itemIcon, exactFolderName)
         item.setToolTip("<b>Location:</b>" + directoryName)
         self.mediaList.addItem(item)
-        
-        self.applyButton.setEnabled(True)
 
         
     def saveChanges(self):
         configManager = XMLDirector()
         configManager.loadXMLConfiguration()
         
-        folders = []
+        contentList = []
         
         #get the folder paths and remove <b>location:<b> junk
         for i in range(0, self.mediaList.count()):
             item = self.mediaList.item(i)
             path = item.toolTip()[16:]
-            folders.append(path)
+            contentList.append(path)
             
-        if self.enabledCheckbox.isChecked():
-            isActive = "yes"
-        else:
-            isActive = "no"
-            
-        configManager.writeLocalContentList(folders, isActive)
-        self.applyButton.setEnabled(False)
+        isActive= "yes" if self.enabledCheckbox.isChecked() else "no"
+        
+        settings = {'contentList':contentList, 'isActive':isActive}
+        
+        configManager.writeLocalContentList(settings)
         
         #Warn about required restart
         osHandle = OSHandle()
@@ -142,6 +135,9 @@ class MediaConfigPanel(QtGui.QWidget):
         paint.drawRect(0,0,w,h)
         
         paint.end()
+        
+    def enableApplyButton(self):
+        self.applyButton.setEnabled(True)
         
     def getFolderIcon(self, name):
         #Attempt to assign every folder a proper icon or default to empty folder

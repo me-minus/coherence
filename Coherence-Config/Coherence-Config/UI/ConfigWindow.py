@@ -83,8 +83,8 @@ class ConfigWindow(QtGui.QWidget):
         #Local Content Panel
         self.localContentPanel = MediaConfigPanel(self)
         self.localContentPanel.setGeometry(160,0,self.width()-160,self.height())
-        folderList, isActive = self.configManager.getLocalContentlist()
-        self.localContentPanel.initializeState(folderList, isActive)
+        settings = self.configManager.getLocalContentlist()
+        self.localContentPanel.initializeState(settings)
         
         #Home Content Panel
         self.homeContentPanel = HomeConfigPanel(self)
@@ -105,9 +105,6 @@ class ConfigWindow(QtGui.QWidget):
         self.settingsConfigPanel.initializeSettings(settings)
         
 
-        
-
-        
         self.showLocalContentPanel()
     
     #Resize the  components

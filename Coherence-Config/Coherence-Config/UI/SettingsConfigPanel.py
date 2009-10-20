@@ -11,8 +11,7 @@ class SettingsConfigPanel(QtGui.QWidget):
         self.timer = QtCore.QTimer()
         
         
-        
-        #Status
+        #Status Label
         self.coherenceStatus = QtGui.QCommandLinkButton("Coherence Status", self)
         self.coherenceStatus.resize(260,40)
         self.coherenceStatus.setIcon(QtGui.QIcon("Icons/cross.png"))
@@ -42,7 +41,40 @@ class SettingsConfigPanel(QtGui.QWidget):
         self.featureGroup.setLayout(self.featureLayout)
         self.featureGroup.show()
         
-        #settings group
+        #Finer details
+        #Server Port
+        self.portLabel = QtGui.QCommandLinkButton("Server Port:")
+        self.portLabel.setIcon(QtGui.QIcon("Icons/cog.png"))
+        self.portLabel.setEnabled(False)
+        self.portLabel.resize(140,40)
+        
+        self.serverPortInput = QtGui.QLineEdit("31240")
+        self.serverPortInput.setMaxLength(5)
+        self.serverPortInput.setInputMask("99999")
+        
+        #Interface
+        self.interfaceLabel = QtGui.QCommandLinkButton("Interface:")
+        self.interfaceLabel.setIcon(QtGui.QIcon("Icons/cog.png"))
+        self.interfaceLabel.setEnabled(False)
+        self.interfaceLabel.resize(140,40)
+        
+        self.interfaceCheckBox = QtGui.QCheckBox("Enable")
+        self.interfaceInput = QtGui.QLineEdit("eth0")
+        
+        #Add to Layout and groupbox
+        self.finerDetailLayout = QtGui.QGridLayout()
+        self.finerDetailLayout.addWidget(self.portLabel,0,0)
+        self.finerDetailLayout.addItem(QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding),0,1)
+        self.finerDetailLayout.addWidget(self.serverPortInput, 0,2)
+        self.finerDetailLayout.addWidget(self.interfaceLabel,1,0)
+        self.finerDetailLayout.addWidget(self.interfaceCheckBox,1,1)
+        self.finerDetailLayout.addWidget(self.interfaceInput,1,2)
+        
+        self.FinerDetailsGroup = QtGui.QGroupBox(self)
+        self.FinerDetailsGroup.setTitle("Finer Details")
+        self.FinerDetailsGroup.setLayout(self.finerDetailLayout)
+        self.FinerDetailsGroup.show()
+        
         
         #Apply button
         self.applyButton = QtGui.QPushButton("Apply", self)
@@ -69,6 +101,7 @@ class SettingsConfigPanel(QtGui.QWidget):
         self.startButton.move(self.width()/2+50,20)
         self.stopButton.move(self.width()/2+145,20)
         self.featureGroup.setGeometry(10,60,self.width()-20,60)
+        self.FinerDetailsGroup.setGeometry(10,130,self.width()-20,120)
         self.applyButton.move(self.width()-160, self.height()-40)
         self.refreshButton.move(self.width()-320, self.height()-40)
         
@@ -102,9 +135,12 @@ class SettingsConfigPanel(QtGui.QWidget):
         configManager = XMLDirector()
         configManager.loadXMLConfiguration()
 
+        serverPort = str(self.serverPortInput.text()).lstrip()
+        interfaceName = str(self.interfaceInput.text()).lstrip()
         
         settings = {'dbus': self.dbusCheckBox.isChecked(), 'webui': self.webuiCheckBox.isChecked(), 
-                 'control':self.cntrlCheckBox.isChecked()}
+                 'control':self.cntrlCheckBox.isChecked(), 'serverport': serverPort,
+                 'interfaceActive': self.interfaceCheckBox.isChecked(), 'interfaceName':interfaceName}
         
         configManager.writeSettingConfig(settings)
         
@@ -115,6 +151,9 @@ class SettingsConfigPanel(QtGui.QWidget):
         self.dbusCheckBox.setChecked(settings['dbus'])
         self.webuiCheckBox.setChecked(settings['webui'])
         self.cntrlCheckBox.setChecked(settings['control'])
+        self.serverPortInput.setText(settings['serverport'])
+        self.interfaceCheckBox.setChecked(settings['interfaceActive'])
+        self.interfaceInput.setText(settings['interfaceName'])
       
         
     def paintEvent(self, event):
