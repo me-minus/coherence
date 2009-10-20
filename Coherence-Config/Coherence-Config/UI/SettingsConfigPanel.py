@@ -108,14 +108,14 @@ class SettingsConfigPanel(QtGui.QWidget):
         
         configManager.writeSettingConfig(settings)
         
+        oshandle = OSHandle()
+        oshandle.warnAboutRestart()
+        
     def initializeSettings(self, settings):
         self.dbusCheckBox.setChecked(settings['dbus'])
         self.webuiCheckBox.setChecked(settings['webui'])
         self.cntrlCheckBox.setChecked(settings['control'])
-                                                                  
-        
-
-        
+      
         
     def paintEvent(self, event):
         paint = QtGui.QPainter()

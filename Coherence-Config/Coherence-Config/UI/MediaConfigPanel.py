@@ -1,12 +1,13 @@
 import sys
 from PyQt4 import QtGui, QtCore
 from XMLDirector import XMLDirector
-
+from OSHandle import OSHandle
 
 class MediaConfigPanel(QtGui.QWidget):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
         self.parent = parent
+        
         
         #default size = 490 x 350
         
@@ -110,6 +111,11 @@ class MediaConfigPanel(QtGui.QWidget):
             
         configManager.writeLocalContentList(folders, isActive)
         self.applyButton.setEnabled(False)
+        
+        #Warn about required restart
+        osHandle = OSHandle()
+        osHandle.warnAboutRestart()
+        
 
     def resizeEvent(self,event):
         self.moveComponents()
