@@ -26,7 +26,7 @@ import coherence.extern.louie as louie
 from coherence import log
 
 
-class PictureRenderer(log.Loggable):
+class CadreRenderer(log.Loggable):
 
     logCategory = 'renderer'
 
@@ -81,7 +81,6 @@ class PictureRenderer(log.Loggable):
 
         connection_id = self.server.connection_manager_server.lookup_avt_id(self.current_connection_id)
 
-
         if self.playcontainer == None:
             self.server.av_transport_server.set_variable(connection_id, 'AVTransportURI',uri)
             self.server.av_transport_server.set_variable(connection_id, 'AVTransportURIMetaData',metadata)
@@ -133,11 +132,15 @@ class PictureRenderer(log.Loggable):
             item = elt.getItems()[0]
             image_title = item.title
         self.stop_auto_next_image()
-        d = client.getPage(image_url, timeout=111)
-        d.addCallback(self.got_image, image_title)
-        d.addCallback(lambda x: self.start_auto_next_image())
-        d.addErrback(got_error, image_url)
-        d.addErrback(got_error, image_url)
+        if image_url.startswith("file://"):
+            self.got_image(image_url)
+            self.start_auto_next_image()
+        else:
+            d = client.getPage(image_url, timeout=111)
+            d.addCallback(self.got_image, image_title)
+            d.addCallback(lambda x: self.start_auto_next_image())
+            d.addErrback(got_error, image_url)
+            d.addErrback(got_error, image_url)
 
         self.server.av_transport_server.set_variable(connection_id,'TransportState','PLAYING')
 
@@ -396,13 +399,13 @@ class PictureRenderer(log.Loggable):
         if NewDisplayTransition in supported_transition_modes:
             self.display_transition = NewDisplayTransition
             if self.server:
-                self.server.av_transport_server.set_variable(InstanceID, 'X_COHESonntagRENCE_DisplayTransition', self.display_transition)
+                self.server.av_transport_server.set_variable(InstanceID, 'X_COHERENCE_DisplayTransition', self.display_transition)
             return {}
         return failure.Failure(errorCode(600))
 
     def upnp_init(self):
         self.current_connection_id = None
-        self.display_time = 120
+        self.display_time = 20
         self.display_transition = 'NONE'
         self.server.connection_manager_server.set_variable(0, 'SinkProtocolInfo',
                             ['http-get:*:image/jpeg:*',

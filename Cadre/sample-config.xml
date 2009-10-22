@@ -1,0 +1,9 @@
+<config>
+  <logging level="warning" />
+  <name>Cadre - Coherence Picture-Frame</name>
+  <content>/path/to/images/here</content>
+  <autostart>yes</autostart>
+  <shuffle>yes</shuffle>
+  <fullscreen>no</fullscreen>
+  <repeat>yes</repeat>
+</config>

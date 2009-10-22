@@ -10,6 +10,8 @@ from twisted.internet import reactor
 
 from coherence import log
 
+import pango
+
 # Clutter
 import clutter
 from clutter import cogl
@@ -95,7 +97,6 @@ class Canvas(log.Loggable):
 
     def __init__(self, fullscreen=1):
         self.fullscreen = fullscreen
-
         self.stage = clutter.Stage()
         if self.fullscreen == 1:
             self.stage.set_fullscreen(True)
@@ -135,16 +136,58 @@ class Canvas(log.Loggable):
     def set_title(self,title):
         self.stage.set_title(title)
 
+    def add_overlay(self,overlay):
+        screen_width,screen_height = self.stage.get_size()
+        texture = clutter.Texture()
+        texture.set_keep_aspect_ratio(True)
+        texture.set_size(int(overlay['width']),int(overlay['height']))
+        print overlay['url']
+        texture.set_from_file(filename=overlay['url'])
+
+        def get_position(item_position,item_width):
+            p = float(str(item_position))
+            try:
+                orientation = item_position['orientation']
+            except:
+                orientation = 'left'
+            try:
+                unit = item_position['unit']
+            except:
+                unit = 'px'
+            if unit in ['%']:
+                p = screen_width * (p/100.0)
+            else:
+                position = int(p)
+
+            if orientation == 'right':
+                p -= int(item_width)
+
+            return p
+
+        position_x = get_position(overlay['position_x'],overlay['width'])
+        position_y = get_position(overlay['position_y'],overlay['width'])
+        print position_x, position_y
+        texture.set_position(position_x, position_y)
+        self.stage.add(texture)
+
     def show_image(self,image,title=''):
         #FIXME - we have the image as data already, there has to be
         #        a better way to get it into the texture
         self.warning("show image %r" % title)
-        from tempfile import mkstemp
-        fp,filename = mkstemp()
-        os.write(fp,image)
-        os.close(fp)
+        if image.startswith("file://"):
+            filename = image[7:]
+        else:
+            from tempfile import mkstemp
+            fp,filename = mkstemp()
+            os.write(fp,image)
+            os.close(fp)
+            remove_file_after_loading = True
         #self.texture.set_load_async(True)
         self.warning("loading image from file %r" % filename)
         self.texture.set_from_file(filename=filename)
         self.set_title(title)
-        os.unlink(filename)
+        try:
+            if remove_file_after_loading:
+                os.unlink(filename)
+        except:
+            pass
