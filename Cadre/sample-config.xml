@@ -5,5 +5,7 @@
   <autostart>yes</autostart>
   <shuffle>yes</shuffle>
   <fullscreen>no</fullscreen>
+  <transition>none</transition>
+  <display_time>10</display_time>
   <repeat>yes</repeat>
 </config>

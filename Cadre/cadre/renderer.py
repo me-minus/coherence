@@ -44,9 +44,20 @@ class CadreRenderer(log.Loggable):
 
         self.controller = kwargs['controller']
 
+        try:
+            self.display_time = kwargs['display_time']
+        except KeyError:
+            self.display_time = 20
+
+        try:
+            self.display_transition = kwargs['transition']
+        except KeyError:
+            self.display_transition = 'NONE'
+
         self.playcontainer = None
 
         self.auto_next_image = None
+        self.display_loop = None
 
         self.dlna_caps = ['playcontainer-0-1']
 
@@ -63,7 +74,7 @@ class CadreRenderer(log.Loggable):
         self.stop_auto_next_image()
         connection_id = self.server.connection_manager_server.lookup_avt_id(self.current_connection_id)
         if self.server.av_transport_server.get_variable('CurrentPlayMode').value in ['REPEAT_ALL']:
-            reactor.callLater(self.display_time, self.upnp_Next,InstanceID=0)
+            self.display_loop = reactor.callLater(self.display_time, self.upnp_Next,InstanceID=0)
 
     def stop_auto_next_image(self):
         if self.auto_next_image:
@@ -387,6 +398,10 @@ class CadreRenderer(log.Loggable):
         NewDisplayTime = int(kwargs['NewDisplayTime'])
         if 0 <= NewDisplayTime <= 65535:
             self.display_time = NewDisplayTime
+            try:
+                self.display_loop.delay(self.display_time)
+            except:
+                pass
             if self.server:
                 self.server.av_transport_server.set_variable(InstanceID, 'X_COHERENCE_DisplayTime', self.display_time)
             return {}
@@ -398,6 +413,7 @@ class CadreRenderer(log.Loggable):
         supported_transition_modes = self.server.av_transport_server.get_variable('X_COHERENCE_DisplayTransition',instance=InstanceID).allowed_values
         if NewDisplayTransition in supported_transition_modes:
             self.display_transition = NewDisplayTransition
+            self.controller.set_transition(NewDisplayTransition)
             if self.server:
                 self.server.av_transport_server.set_variable(InstanceID, 'X_COHERENCE_DisplayTransition', self.display_transition)
             return {}
@@ -405,8 +421,6 @@ class CadreRenderer(log.Loggable):
 
     def upnp_init(self):
         self.current_connection_id = None
-        self.display_time = 20
-        self.display_transition = 'NONE'
         self.server.connection_manager_server.set_variable(0, 'SinkProtocolInfo',
                             ['http-get:*:image/jpeg:*',
                              'http-get:*:image/png:*',
@@ -426,7 +440,7 @@ class CadreRenderer(log.Loggable):
         self.server.av_transport_server.register_vendor_variable('X_COHERENCE_DisplayTransition',
                                                                  evented='yes',
                                                                  data_type='string',default_value=self.display_transition,
-                                                                 allowed_values=['NONE',])
+                                                                 allowed_values=self.controller.get_available_transitions())
         self.server.av_transport_server.register_vendor_action('X_COHERENCE_SetDisplayTransition','optional',
                                                                (('InstanceID','in','A_ARG_TYPE_InstanceID'),('NewDisplayTransition','in','X_COHERENCE_DisplayTransition')))
         self.server.av_transport_server.register_vendor_action('X_COHERENCE_GetDisplayTransition','optional',

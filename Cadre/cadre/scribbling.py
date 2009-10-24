@@ -97,6 +97,8 @@ class Canvas(log.Loggable):
 
     def __init__(self, fullscreen=1):
         self.fullscreen = fullscreen
+        self.transition = 'FADE'
+
         self.stage = clutter.Stage()
         if self.fullscreen == 1:
             self.stage.set_fullscreen(True)
@@ -113,28 +115,164 @@ class Canvas(log.Loggable):
         if self.fullscreen == 1:
             self.stage.connect('button-press-event', lambda x,y: reactor.stop())
         self.stage.connect('destroy', lambda x: reactor.stop())
+        #self.stage.connect('key-press-event', self.process_key)
 
-        group = clutter.Group()
-        self.stage.add(group)
+        self.texture_group = clutter.Group()
+        self.stage.add(self.texture_group)
 
-        self.texture = clutter.Texture()
-        self.texture.set_keep_aspect_ratio(True)
-        self.texture.set_size(display_width,display_height)
+        self.texture_1 = clutter.Texture()
+        self.texture_1.set_opacity(0)
+        self.texture_1.set_keep_aspect_ratio(True)
+        self.texture_1.set_size(display_width,display_height)
+        self.texture_1.haz_image = False
 
-        reflect = TextureReflection(self.texture)
-        reflect.set_reflection_height(display_height/3)
-        reflect.set_opacity(100)
+        self.texture_2 = clutter.Texture()
+        self.texture_2.set_opacity(0)
+        self.texture_2.set_keep_aspect_ratio(True)
+        self.texture_2.set_size(display_width,display_height)
+        self.texture_2.haz_image = False
 
-        x_pos = float((self.stage.get_width() - self.texture.get_width()) / 2)
+        self.texture_1.reflection = TextureReflection(self.texture_1)
+        self.texture_1.reflection.set_reflection_height(display_height/3)
+        self.texture_1.reflection.set_opacity(100)
 
-        group.add(self.texture, reflect)
-        group.set_position(x_pos, 20.0)
-        reflect.set_position(0.0, (self.texture.get_height() + 20))
+        self.texture_2.reflection = TextureReflection(self.texture_2)
+        self.texture_2.reflection.set_reflection_height(display_height/3)
+        self.texture_2.reflection.set_opacity(0)
 
+        x_pos = float((self.stage.get_width() - self.texture_1.get_width()) / 2)
+
+        self.texture_group.add(self.texture_1, self.texture_1.reflection)
+        self.texture_group.add(self.texture_2, self.texture_2.reflection)
+        self.texture_group.set_position(x_pos, 20.0)
+        self.texture_1.reflection.set_position(0.0, (self.texture_1.get_height() + 20))
+        self.texture_2.reflection.set_position(0.0, (self.texture_2.get_height() + 20))
+
+        def timeline_out_1_comleted(x):
+            self.info("timeline_out_1_comleted")
+
+        def timeline_out_2_comleted(x):
+            self.info("timeline_out_2_comleted")
+
+        def timeline_in_1_comleted(x):
+            self.info("timeline_in_1_comleted")
+
+        def timeline_in_2_comleted(x):
+            self.info("timeline_in_2_comleted")
+
+        self.texture_1.transition_fade_out_timeline = clutter.Timeline(2000)
+        self.texture_1.transition_fade_out_timeline.connect('completed',timeline_out_1_comleted)
+        alpha=clutter.Alpha(self.texture_1.transition_fade_out_timeline, clutter.EASE_OUT_SINE)
+        self.fade_out_texture_behaviour_1 = clutter.BehaviourOpacity(alpha=alpha, opacity_start=255, opacity_end=0)
+        self.fade_out_texture_behaviour_1.apply(self.texture_1)
+        self.fade_out_reflection_behaviour_1 = clutter.BehaviourOpacity(alpha=alpha, opacity_start=100, opacity_end=0)
+        self.fade_out_reflection_behaviour_1.apply(self.texture_1.reflection)
+        self.texture_1.transition_fade_out_timeline.add_marker_at_time('out_nearly_finished', 500)
+
+        self.texture_1.transition_fade_in_timeline = clutter.Timeline(2000)
+        self.texture_1.transition_fade_in_timeline.connect('completed',timeline_in_1_comleted)
+        alpha=clutter.Alpha(self.texture_1.transition_fade_in_timeline, clutter.EASE_OUT_SINE)
+        self.fade_in_texture_behaviour_1 = clutter.BehaviourOpacity(alpha=alpha, opacity_start=0, opacity_end=255)
+        self.fade_in_texture_behaviour_1.apply(self.texture_1)
+        self.fade_in_reflection_behaviour_1 = clutter.BehaviourOpacity(alpha=alpha, opacity_start=0, opacity_end=100)
+        self.fade_in_reflection_behaviour_1.apply(self.texture_1.reflection)
+
+        self.texture_2.transition_fade_out_timeline = clutter.Timeline(2000)
+        self.texture_2.transition_fade_out_timeline.connect('completed',timeline_out_2_comleted)
+        alpha=clutter.Alpha(self.texture_2.transition_fade_out_timeline, clutter.EASE_OUT_SINE)
+        self.fade_out_texture_behaviour_2 = clutter.BehaviourOpacity(alpha=alpha, opacity_start=255, opacity_end=0)
+        self.fade_out_texture_behaviour_2.apply(self.texture_2)
+        self.fade_out_reflection_behaviour_2 = clutter.BehaviourOpacity(alpha=alpha, opacity_start=100, opacity_end=0)
+        self.fade_out_reflection_behaviour_2.apply(self.texture_2.reflection)
+        self.texture_2.transition_fade_out_timeline.add_marker_at_time('out_nearly_finished', 500)
+
+        self.texture_2.transition_fade_in_timeline = clutter.Timeline(2000)
+        self.texture_2.transition_fade_in_timeline.connect('completed',timeline_in_2_comleted)
+        alpha=clutter.Alpha(self.texture_2.transition_fade_in_timeline, clutter.EASE_OUT_SINE)
+        self.fade_in_texture_behaviour_2 = clutter.BehaviourOpacity(alpha=alpha, opacity_start=0, opacity_end=255)
+        self.fade_in_texture_behaviour_2.apply(self.texture_2)
+        self.fade_in_reflection_behaviour_2 = clutter.BehaviourOpacity(alpha=alpha, opacity_start=0, opacity_end=100)
+        self.fade_in_reflection_behaviour_2.apply(self.texture_2.reflection)
+
+        self.texture_1.fading_score = clutter.Score()
+        self.texture_1.fading_score.append(timeline=self.texture_2.transition_fade_out_timeline)
+        self.texture_1.fading_score.append_at_marker(timeline=self.texture_1.transition_fade_in_timeline,parent=self.texture_2.transition_fade_out_timeline,marker_name='out_nearly_finished')
+        def score_1_started(x):
+            self.info("score_1_started")
+        def score_1_completed(x):
+            self.info("score_1_completed")
+        self.texture_1.fading_score.connect('started', score_1_started)
+        self.texture_1.fading_score.connect('completed', score_1_completed)
+
+        self.texture_2.fading_score = clutter.Score()
+        self.texture_2.fading_score.append(timeline=self.texture_1.transition_fade_out_timeline)
+        self.texture_2.fading_score.append_at_marker(timeline=self.texture_2.transition_fade_in_timeline,parent=self.texture_1.transition_fade_out_timeline,marker_name='out_nearly_finished')
+        def score_2_started(x):
+            self.info("score_2_started")
+        def score_2_completed(x):
+            self.info("score_2_completed")
+        self.texture_2.fading_score.connect('started', score_2_started)
+        self.texture_2.fading_score.connect('completed', score_2_completed)
+
+        self.in_texture = self.texture_1
+        self.out_texture = self.texture_2
         self.stage.show()
 
     def set_title(self,title):
         self.stage.set_title(title)
+
+    def process_key(self,stage,event):
+        print "process_key", stage,event
+
+    def get_available_transitions(self):
+        return [str(x.replace('_transition_','')) for x in dir(self) if x.startswith('_transition_')]
+
+    def _transition_NONE(self):
+        self.in_texture.set_opacity(255)
+        self.in_texture.reflection.set_opacity(100)
+        self.out_texture.set_opacity(0)
+        self.out_texture.reflection.set_opacity(0)
+        self.out_texture,self.in_texture = self.in_texture,self.out_texture
+
+    def _transition_FADE(self):
+        if self.out_texture.haz_image == True:
+            self.texture_group.lower_child(self.out_texture)
+            self.texture_group.lower_child(self.out_texture.reflection)
+            self.in_texture.fading_score.start()
+            self.out_texture,self.in_texture = self.in_texture,self.out_texture
+        else:
+            self._transition_NONE()
+
+    def load_the_new_one(self,image,title):
+        self.warning("show image %r" % title)
+        if image.startswith("file://"):
+            filename = image[7:]
+        else:
+            #FIXME - we have the image as data already, there has to be
+            #        a better way to get it into the texture
+            from tempfile import mkstemp
+            fp,filename = mkstemp()
+            os.write(fp,image)
+            os.close(fp)
+            remove_file_after_loading = True
+        #self.texture.set_load_async(True)
+        self.warning("loading image from file %r" % filename)
+        self.in_texture.set_from_file(filename=filename)
+        self.in_texture.haz_image = True
+        self.set_title(title)
+        try:
+            if remove_file_after_loading:
+                os.unlink(filename)
+        except:
+            pass
+
+    def show_image(self,image,title=''):
+        self.load_the_new_one(image,title)
+        function = getattr(self, "_transition_%s" % self.transition, None)
+        if function:
+            function()
+            return
+        self._transition_NONE()
 
     def add_overlay(self,overlay):
         screen_width,screen_height = self.stage.get_size()
@@ -169,25 +307,3 @@ class Canvas(log.Loggable):
         print position_x, position_y
         texture.set_position(position_x, position_y)
         self.stage.add(texture)
-
-    def show_image(self,image,title=''):
-        #FIXME - we have the image as data already, there has to be
-        #        a better way to get it into the texture
-        self.warning("show image %r" % title)
-        if image.startswith("file://"):
-            filename = image[7:]
-        else:
-            from tempfile import mkstemp
-            fp,filename = mkstemp()
-            os.write(fp,image)
-            os.close(fp)
-            remove_file_after_loading = True
-        #self.texture.set_load_async(True)
-        self.warning("loading image from file %r" % filename)
-        self.texture.set_from_file(filename=filename)
-        self.set_title(title)
-        try:
-            if remove_file_after_loading:
-                os.unlink(filename)
-        except:
-            pass

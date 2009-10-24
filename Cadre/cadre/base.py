@@ -74,6 +74,18 @@ class Cadre(log.Loggable):
                 'no_thread_needed':True,
                 'name':name}
 
+        kwargs['transition'] = 'NONE'
+        try:
+            if self.config['transition'].upper() in self.get_available_transitions():
+                kwargs['transition'] = self.config['transition'].upper()
+                self.set_transition(self.config['transition'].upper())
+        except:
+            pass
+
+        try:
+            kwargs['display_time'] = int(self.config['display_time'])
+        except:
+            pass
 
         self.canvas.set_title(name)
 
@@ -172,6 +184,16 @@ class Cadre(log.Loggable):
 
     def quit(self):
         reactor.stop()
+
+    def get_available_transitions(self):
+        try:
+            return self.canvas.get_available_transitions()
+        except:
+            return ['NONE']
+
+    def set_transition(self,transition):
+        if transition in self.get_available_transitions():
+            self.canvas.transition = transition
 
     def walk(self, path):
         containers = []
