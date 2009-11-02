@@ -273,12 +273,16 @@ if __name__ == '__main__':
         if options['logfile'] == None:
             config.get('logging').get('level','none')
 
-
-    try:
-        from twisted.internet import glib2reactor
-        glib2reactor.install()
-    except AssertionError:
-        print "error installing glib2reactor"
+    grafics = config.get('grafics')
+    if grafics == 'pyglet':
+        from cadre.extern import pygletreactor
+        pygletreactor.install()
+    else:
+        try:
+            from twisted.internet import glib2reactor
+            glib2reactor.install()
+        except AssertionError:
+            print "error installing glib2reactor"
 
     from twisted.internet import reactor
 

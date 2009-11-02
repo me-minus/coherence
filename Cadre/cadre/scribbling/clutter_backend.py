@@ -95,12 +95,12 @@ class Canvas(log.Loggable):
 
     logCategory = 'canvas'
 
-    def __init__(self, fullscreen=1):
+    def __init__(self, fullscreen=True):
         self.fullscreen = fullscreen
         self.transition = 'FADE'
 
         self.stage = clutter.Stage()
-        if self.fullscreen == 1:
+        if self.fullscreen == True:
             self.stage.set_fullscreen(True)
         else:
             self.stage.set_size(1200, 800)
@@ -112,7 +112,7 @@ class Canvas(log.Loggable):
         display_height = size[1]*0.7
 
         self.stage.set_color(clutter.Color(0,0,0))
-        if self.fullscreen == 1:
+        if self.fullscreen == True:
             self.stage.connect('button-press-event', lambda x,y: reactor.stop())
         self.stage.connect('destroy', lambda x: reactor.stop())
         #self.stage.connect('key-press-event', self.process_key)

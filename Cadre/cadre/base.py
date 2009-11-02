@@ -16,8 +16,9 @@ import mimetypes
 mimetypes.init()
 
 # Twisted
-from twisted.internet import reactor
+from twisted.internet import defer, reactor
 from twisted.python.filepath import FilePath
+
 
 # Coherence
 from coherence.base import Coherence
@@ -28,13 +29,7 @@ from coherence import log
 
 from coherence.upnp.core.utils import means_true
 
-from cadre.scribbling import Canvas
 from cadre.renderer import CadreRenderer
-
-def xmeans_true(value):
-    if isinstance(value,basestring):
-        value = value.lower()
-    return value in [True,1,'1','true','yes','ok']
 
 class Cadre(log.Loggable):
 
@@ -42,12 +37,17 @@ class Cadre(log.Loggable):
 
     def __init__(self,config):
         self.config = config
-        fullscreen = 0
+        fullscreen = False
         try:
             if means_true(self.config['fullscreen']):
-                fullscreen = 1
+                fullscreen = True
         except:
             pass
+        grafics = self.config.get('grafics')
+        if grafics == 'pyglet':
+            from cadre.scribbling.pyglet_backend import Canvas
+        else:
+            from cadre.scribbling.clutter_backend import Canvas
         self.canvas = Canvas(fullscreen)
 
         try:
@@ -144,13 +144,23 @@ class Cadre(log.Loggable):
             self.content = []
         if not isinstance( self.content, list):
             self.content = [self.content]
-        self.content = set(map(os.path.abspath,self.content))
 
-        self.files = []
-        self.playlist = []
-        self.warning("checking for files...")
+        tmp_l = []
         for path in self.content:
-            self.walk(path)
+            if path.startswith('http://'):
+                tmp_l.append(path)
+            else:
+                tmp_l.append(os.path.abspath(path))
+        self.content = tmp_l
+
+        self.items = []
+        self.playlist = []
+        self.warning("checking for items...")
+        for path in self.content:
+            if path.startswith('http://'):
+                self.items.append(path)
+            else:
+                self.walk(path)
         self.warning("done")
 
         self.renderer.av_transport_server.get_variable('AVTransportURI').subscribe(self.state_variable_change)
@@ -160,23 +170,18 @@ class Cadre(log.Loggable):
         #self.renderer.av_transport_server.get_variable('LastChange').subscribe(self.state_variable_change)
         try:
             if means_true(self.config['autostart']):
-                self.playlist = self.files[:]
-                if means_true(self.config['shuffle']):
-                    random.shuffle(self.playlist)
-                file = self.playlist.pop()
-                try:
-                    uri = "file://" + file.path
-                except:
-                    uri = file
-                self.renderer.backend.stop()
-                self.renderer.backend.load(uri,'')
-                self.renderer.backend.play()
-                file = self.playlist.pop()
-                try:
-                    uri = "file://" + file.path
-                except:
-                    uri = file
-                self.renderer.backend.upnp_SetNextAVTransportURI(InstanceID='0',NextURI=uri,NextURIMetaData='')
+                d = defer.maybeDeferred(self.get_next_item)
+                d.addCallback(lambda result: self.set_renderer_uri(self.renderer,result[0],result[1]))
+                d.addErrback(self.got_error)
+
+                def get_next():
+                    d = defer.maybeDeferred(self.get_next_item)
+                    d.addCallback(lambda result: self.set_renderer_next_uri(self.renderer,result[0],result[1]))
+                    d.addErrback(self.got_error)
+
+                d.addCallback(lambda result: get_next())
+                d.addErrback(self.got_error)
+
         except KeyError:
             pass
         except:
@@ -184,6 +189,10 @@ class Cadre(log.Loggable):
 
     def quit(self):
         reactor.stop()
+
+    def got_error(self,error):
+        self.warning("error %r" % error)
+        error.printTraceback()
 
     def get_available_transitions(self):
         try:
@@ -195,13 +204,38 @@ class Cadre(log.Loggable):
         if transition in self.get_available_transitions():
             self.canvas.transition = transition
 
+    def get_next_item(self):
+        try:
+            uri = self.playlist.pop()
+        except IndexError:
+            self.playlist = self.items[:]
+            if means_true(self.config['shuffle']):
+                random.shuffle(self.playlist)
+            uri = self.playlist.pop()
+
+        try:
+            uri = "file://" + uri.path
+            return uri,''
+        except:
+            if uri.startswith('http://'):
+                pass
+            raise
+
+    def set_renderer_uri(self,renderer,uri,meta=''):
+        renderer.backend.stop()
+        renderer.backend.load(uri,meta)
+        renderer.backend.play()
+
+    def set_renderer_next_uri(self,renderer,uri,meta=''):
+        renderer.backend.upnp_SetNextAVTransportURI(InstanceID='0',NextURI=uri,NextURIMetaData=meta)
+
     def walk(self, path):
         containers = []
         filepath = FilePath(path)
         if filepath.isdir():
             containers.append(filepath)
         elif filepath.isfile():
-            self.files.append(FilePath(path))
+            self.items.append(FilePath(path))
         while len(containers)>0:
             container = containers.pop()
             try:
@@ -211,7 +245,7 @@ class Cadre(log.Loggable):
                     elif child.isfile() or child.islink():
                         mimetype,_ = mimetypes.guess_type(child.path, strict=False)
                         if mimetype and mimetype.startswith("image/"):
-                            self.files.append(child)
+                            self.items.append(child)
             except UnicodeDecodeError:
                 self.warning("UnicodeDecodeError - there is something wrong with a file located in %r", container.get_path())
 
@@ -222,18 +256,9 @@ class Cadre(log.Loggable):
         print "media_server_removed", udn
 
     def state_variable_change(self,variable):
-        print "state_variable %r changed from %r -> %r" % (variable.name,variable.old_value,variable.value)
+        self.warning("state_variable %r changed from %r -> %r" % (variable.name,variable.old_value,variable.value))
         if variable.name == 'NextAVTransportURI':
             if variable.value == '' and self.renderer.av_transport_server.get_variable('TransportState').value == 'TRANSITIONING':
-                try:
-                    file = self.playlist.pop()
-                except IndexError:
-                    self.playlist = self.files[:]
-                    if means_true(self.config['shuffle']):
-                        random.shuffle(self.playlist)
-                    file = self.playlist.pop()
-                try:
-                    uri = "file://" + file.path
-                except:
-                    uri = file
-                self.renderer.backend.upnp_SetNextAVTransportURI(InstanceID='0',NextURI=uri,NextURIMetaData='')
+                d = defer.maybeDeferred(self.get_next_item)
+                d.addCallback(lambda result: self.set_renderer_next_uri(self.renderer,result[0],result[1]))
+                d.addErrback(self.got_error)

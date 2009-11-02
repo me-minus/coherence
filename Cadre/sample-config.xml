@@ -2,6 +2,7 @@
   <logging level="warning" />
   <name>Cadre - Coherence Picture-Frame</name>
   <content>/path/to/images/here</content>
+  <grafics>clutter</grafics>
   <autostart>yes</autostart>
   <shuffle>yes</shuffle>
   <fullscreen>no</fullscreen>
