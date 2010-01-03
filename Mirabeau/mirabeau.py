@@ -68,8 +68,8 @@ class Settings(UILoader):
 
     def accepted(self):
         print "account", self.accounts[str(self.accountsBox.currentText())]
-        print "conf server", str(self.confServerTextEdit.toPlainText())
-        print "chatroom", str(self.chatRoomTextEdit.toPlainText())
+        print "conf server", str(self.confServerTextEdit.text())
+        print "chatroom", str(self.chatRoomTextEdit.text())
 
     def rejected(self):
         print "bah"
