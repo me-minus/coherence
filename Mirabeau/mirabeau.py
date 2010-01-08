@@ -1,4 +1,7 @@
 import sys, os
+
+from coherence.extern import qt4reactor
+
 from PyQt4 import QtGui, uic
 from PyQt4 import QtCore
 from PyQt4.QtCore import pyqtRemoveInputHook
@@ -6,6 +9,9 @@ from PyQt4.QtCore import pyqtRemoveInputHook
 from coherence.extern.simple_config import Config
 from coherence.extern.telepathy import connect
 from telepathy.interfaces import ACCOUNT_MANAGER, ACCOUNT
+from telepathy.interfaces import CONN_INTERFACE
+from telepathy.constants import CONNECTION_STATUS_CONNECTED, \
+     CONNECTION_STATUS_DISCONNECTED, CONNECTION_STATUS_CONNECTING
 import dbus
 
 BASEDIR = os.path.dirname(__file__)
@@ -46,11 +52,20 @@ class UILoader(object):
 
 class Window(UILoader):
     uifilename = "main.ui"
+    coherence_instance = None
+
+    def __init__(self, CoherenceClass):
+        self.CoherenceClass = CoherenceClass
+        super(Window, self).__init__()
 
     def connectSignals(self):
         self.connect(self.settingsButton, QtCore.SIGNAL("clicked()"),
                      self.openSettings)
+        self.connect(self.statusButton, QtCore.SIGNAL("clicked()"),
+                     self.updateStatus)
         self.loadConfig()
+        if self.config.get("mirabeau").get("account"):
+            self.startCoherence()
 
     def loadConfig(self):
         if not os.path.exists(CONFIG_PATH):
@@ -65,6 +80,48 @@ class Window(UILoader):
             fd.close()
 
         self.config = Config(CONFIG_PATH, root='config')
+
+    def startCoherence(self, restart=False):
+        if restart:
+            if self.coherence_instance:
+                dfr = self.coherence_instance.shutdown()
+                dfr.addCallback(lambda result: self.startCoherence())
+                return dfr
+            else:
+                self.coherence_instance = self.CoherenceClass(self.config)
+        else:
+            self.coherence_instance = self.CoherenceClass(self.config)
+        if self.coherence_instance:
+            mirabeau_instance = self.coherence_instance.mirabeau
+            conn_obj = mirabeau_instance.tube_publisher.conn[CONN_INTERFACE]
+            handle = conn_obj.connect_to_signal('StatusChanged',
+                                                self.status_changed_cb)
+            self.status_update_handle = handle
+            #pdb(locals())
+
+    def stopCoherence(self):
+        def stopped(result):
+            self.coherence_instance.clear()
+            self.coherence_instance = None
+
+        dfr = self.coherence_instance.shutdown()
+        dfr.addCallback(stopped)
+        return dfr
+
+    def status_changed_cb(self, status, reason):
+        if status == CONNECTION_STATUS_CONNECTING:
+            text = "Connecting. Please wait"
+        elif status == CONNECTION_STATUS_CONNECTED:
+            text = 'Connected'
+        elif status == CONNECTION_STATUS_DISCONNECTED:
+            text = 'Disconnected'
+        self.statusButton.setText(text)
+
+    def updateStatus(self):
+        if self.coherence_instance:
+            self.stopCoherence()
+        else:
+            self.startCoherence()
 
     def openSettings(self):
         self._setting_win = Settings(self)
@@ -125,11 +182,17 @@ class Settings(UILoader):
         pass
 
 if __name__ == '__main__':
-    # Creating Qt application
     app = QtGui.QApplication(sys.argv)
+    qt4reactor.install()
+    from twisted.internet import reactor
+    from coherence.base import Coherence
 
-    win = Window()
-    win.show()
+    def start():
+        print "start"
+        win = Window(Coherence)
+        win.show()
+        app.exec_()
+        reactor.stop()
 
-    #Initing application
-    sys.exit(app.exec_())
+    reactor.callWhenRunning(start)
+    reactor.run()

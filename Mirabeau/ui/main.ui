@@ -20,10 +20,10 @@
       <x>70</x>
       <y>0</y>
       <width>621</width>
-      <height>291</height>
+      <height>331</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout" rowstretch="1,0,1,0" columnstretch="1,1">
+    <layout class="QGridLayout" name="gridLayout" rowstretch="1,0,0,0,0" columnstretch="1,0">
      <property name="sizeConstraint">
       <enum>QLayout::SetMaximumSize</enum>
      </property>
@@ -45,7 +45,7 @@
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
          <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
+         <verstretch>1</verstretch>
         </sizepolicy>
        </property>
        <property name="text">
@@ -70,7 +70,7 @@
       <widget class="QPushButton" name="remoteDevicesButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
+         <horstretch>1</horstretch>
          <verstretch>1</verstretch>
         </sizepolicy>
        </property>
@@ -79,16 +79,16 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="2">
-      <widget class="QLabel" name="statusLabel">
+     <item row="3" column="0" colspan="2">
+      <widget class="QPushButton" name="statusButton">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
          <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
+         <verstretch>1</verstretch>
         </sizepolicy>
        </property>
        <property name="text">
-        <string>TextLabel</string>
+        <string>PushButton</string>
        </property>
       </widget>
      </item>
