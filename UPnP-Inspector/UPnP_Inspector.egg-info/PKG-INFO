@@ -1,12 +1,12 @@
 Metadata-Version: 1.0
 Name: UPnP-Inspector
-Version: 0.2.2
+Version: 0.2.3
 Summary: UPnP Device and Service analyzer
 Home-page: http://coherence.beebits.net/wiki/UPnP-Inspector
 Author: Frank Scholz
 Author-email: coherence@beebits.net
 License: MIT
-Download-URL: http://coherence.beebits.net/download/UPnP-Inspector-0.2.2.tar.gz
+Download-URL: http://coherence.beebits.net/download/UPnP-Inspector-0.2.3.tar.gz
 Description: UPnP-Inspector is an UPnP Device and Service analyzer,
         based on the Coherence DLNA/UPnP framework.
         

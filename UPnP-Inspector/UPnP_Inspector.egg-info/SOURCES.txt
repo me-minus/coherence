@@ -19,6 +19,7 @@ upnp_inspector/details.py
 upnp_inspector/devices.py
 upnp_inspector/events.py
 upnp_inspector/extract.py
+upnp_inspector/igd.py
 upnp_inspector/log.py
 upnp_inspector/mediarenderer.py
 upnp_inspector/mediaserver.py
@@ -30,6 +31,7 @@ upnp_inspector/icons/audio-x-generic.png
 upnp_inspector/icons/blankalbum.png
 upnp_inspector/icons/camera-web.png
 upnp_inspector/icons/folder.png
+upnp_inspector/icons/green.png
 upnp_inspector/icons/image-x-generic.png
 upnp_inspector/icons/inspector-icon.png
 upnp_inspector/icons/inspector-logo.png
@@ -44,6 +46,7 @@ upnp_inspector/icons/media-skip-forward.png
 upnp_inspector/icons/network-light.png
 upnp_inspector/icons/network-server.png
 upnp_inspector/icons/printer.png
+upnp_inspector/icons/red.png
 upnp_inspector/icons/upnp-action-arg-in.png
 upnp_inspector/icons/upnp-action-arg-out.png
 upnp_inspector/icons/upnp-action.png
