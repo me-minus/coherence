@@ -1,1 +1,1 @@
-Coherence >= 0.6.4
+Coherence >= 0.6.7
