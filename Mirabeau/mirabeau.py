@@ -61,8 +61,12 @@ class Window(UILoader):
     def connectSignals(self):
         self.connect(self.settingsButton, QtCore.SIGNAL("clicked()"),
                      self.openSettings)
-        self.connect(self.statusButton, QtCore.SIGNAL("clicked()"),
-                     self.updateStatus)
+        # FIXME: reactivate when shutdown/startup of coherence is fixed
+        ## self.connect(self.statusButton, QtCore.SIGNAL("clicked()"),
+        ##              self.updateStatus)
+        self.connect(self.localDevicesButton, QtCore.SIGNAL("clicked()"),
+                     self.openLocalDevices)
+
         self.loadConfig()
         if self.config.get("mirabeau").get("account"):
             self.startCoherence()
@@ -103,9 +107,10 @@ class Window(UILoader):
         def stopped(result):
             self.coherence_instance.clear()
             self.coherence_instance = None
-
+            print ">>", result
+            
         dfr = self.coherence_instance.shutdown()
-        dfr.addCallback(stopped)
+        dfr.addBoth(stopped)
         return dfr
 
     def status_changed_cb(self, status, reason):
@@ -126,6 +131,38 @@ class Window(UILoader):
     def openSettings(self):
         self._setting_win = Settings(self)
         self._setting_win.show()
+
+    def openLocalDevices(self):
+        self._local_devices_win = LocalDevices(self)
+        self._local_devices_win.show()
+
+class LocalDevices(UILoader):
+    uifilename = "local_devices.ui"
+
+    def __init__(self, parent):
+        self.parent = parent
+        super(LocalDevices, self).__init__()
+
+    def connectSignals(self):
+        listePays = QtCore.QStringList([])
+        self.model = QtGui.QStringListModel(listePays)
+        self.listView.setModel(self.model)
+
+        coherence = self.parent.coherence_instance
+        coherence.connect(self.device_found, 'Coherence.UPnP.RootDevice.detection_completed')
+        coherence.connect(self.device_removed, 'Coherence.UPnP.RootDevice.removed')
+        for device in coherence.devices:
+            self.device_found(device)
+
+    def device_found(self, device=None):
+        name = '%s (%s)' % (device.get_friendly_name(), ':'.join(device.get_device_type().split(':')[3:5]))
+        devices = self.model.stringList()
+        devices.append(name)
+        self.model.setStringList(devices)
+        #self.model.sort()
+
+    def device_removed(self,usn=None):
+        print usn
 
 class Settings(UILoader):
     uifilename = "settings.ui"
@@ -184,6 +221,7 @@ class Settings(UILoader):
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     qt4reactor.install()
+
     from twisted.internet import reactor
     from coherence.base import Coherence
 
