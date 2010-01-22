@@ -21,7 +21,7 @@ from twisted.internet import reactor
 
 from coherence.base import Coherence
 
-from coherence.extern.simple_config import Config
+from coherence.extern.simple_config import Config, XmlDictObject
 from coherence.extern.telepathy import connect
 
 from telepathy.interfaces import ACCOUNT_MANAGER, ACCOUNT
@@ -48,75 +48,70 @@ DEFAULT_CONFIG="""\
 </config>
 """
 
+"""
+TODO:
+
+- local device config (en/disable tube export)
+- chatroom
+- player
+- if no account configured start coherence with mirabeau deactivated
+- dis/reconnect when settings are changed
+
+"""
+
 class MainWindow(hildon.StackableWindow):
 
     def __init__(self):
         super(MainWindow, self).__init__()
-
         self.set_title("Mirabeau")
         self.set_app_menu(self._create_menu())
+        self.connect('delete-event', self._exit_cb)
 
         self.vbox = gtk.VBox()
 
-        self.hbox_top = gtk.HBox()
-        self.hbox_top.show()
-        self.vbox.pack_start(self.hbox_top, expand=False)
+        self.devices_view = hildon.GtkTreeView(gtk.HILDON_UI_MODE_EDIT)
+        model = gtk.ListStore(str)
+        self.devices_view.set_model(model)
+        column = gtk.TreeViewColumn('Name', gtk.CellRendererText(), text = 0)
+        self.devices_view.append_column(column)
 
-        # top left
-        self.settings_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
-        self.settings_button.set_label(_("Settings"))
-        self.settings_button.connect('clicked', self.open_settings)
-        self.settings_button.show()
-        self.hbox_top.pack_start(self.settings_button)
+        self.devices_view.show()
+        self.vbox.pack_start(self.devices_view, expand=True)
 
-        # top right
         self.chatroom_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
         self.chatroom_button.set_label(_("Chatroom"))
-        self.chatroom_button.show()
-        self.hbox_top.pack_start(self.chatroom_button)
-
-        self.hbox_middle = gtk.HBox()
-        self.hbox_middle.show()
-        self.vbox.pack_start(self.hbox_middle, expand=False)
-
-        # middle left
-        self.local_devices_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
-        self.local_devices_button.set_label(_("Local Devices"))
-        self.local_devices_button.connect('clicked', self.open_local_devices)
-        self.local_devices_button.show()
-        self.hbox_middle.pack_start(self.local_devices_button)
-
-        # middle right
-        self.remote_devices_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
-        self.remote_devices_button.set_label(_("Remote Devices"))
-        self.remote_devices_button.show()
-        self.hbox_middle.pack_start(self.remote_devices_button)
-
-        # bottom center
-        self.status_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
-        self.status_button.set_label("status")
-        self.status_button.connect('clicked', self.update_status)
-        self.status_button.show()
-        self.vbox.pack_start(self.status_button, expand=False)
+        self.vbox.pack_start(self.chatroom_button, expand=False)
 
         self.add(self.vbox)
-        self.vbox.show()
+        self.vbox.show_all()
 
-        self.connect('delete-event', self._exit_cb)
-
+        self.status_changed_cb(CONNECTION_STATUS_DISCONNECTED, "")
         self.load_config()
-        if self.config.get("mirabeau").get("account"):
-            self.start_coherence()
-        else:
-            self.coherence_instance = None
-            self.status_changed_cb(CONNECTION_STATUS_DISCONNECTED, "")
+        self.start_coherence()
+
+    def device_found(self, device):
+        name = device.get_friendly_name()
+        model = self.devices_view.get_model()
+        model.append([name])
+
+    def device_removed(self, usn):
+        print usn
+        # TODO
 
     def _create_menu(self):
         menu = hildon.AppMenu()
 
-        button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
-        button.set_label(_('Foo'))
-        menu.append(button)
+        self.settings_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
+        self.settings_button.set_label(_("Settings"))
+        self.settings_button.connect('clicked', self.open_settings)
+        self.settings_button.show()
+        menu.append(self.settings_button)
+
+        self.status_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
+        self.status_button.set_label("status")
+        self.status_button.connect('clicked', self.update_status)
+        self.status_button.show()
+        menu.append(self.status_button)
 
         menu.show_all()
         return menu
@@ -138,30 +133,109 @@ class MainWindow(hildon.StackableWindow):
 
         self.config = Config(CONFIG_PATH, root='config')
 
+    def reload_config(self):
+        self.config.save()
+        self.load_config()
+
+    def enable_mirabeau(self):
+        self.config.set("enable_mirabeau", "yes")
+        self.reload_config()
+
+    def disable_mirabeau(self):
+        self.config.set("enable_mirabeau", "no")
+        self.reload_config()
+
+    def platform_media_directories(self):
+        candidates = ["~/MyDocs/.images", "~/MyDocs/.sounds", "~/MyDocs/.videos",
+                      "~/MyDocs/DCIM", "~/MyDocs/Music", "~/MyDocs/Videos",
+                      ]
+        expanded = [os.path.expanduser(c) for c in candidates]
+        dirs = [c for c in expanded if os.path.isdir(c)]
+        return dirs
+
+    def enable_media_server(self):
+        plugins = self.config.get("plugin")
+        if not plugins:
+            directories = self.platform_media_directories()
+            opts = dict(uuid="33d68364-5bee-4dee-9ede-52afdd7baeaf",
+                        name="N900", content=",".join(directories),
+                        backend="FSStore")
+            plugin = XmlDictObject(initdict=opts)
+            plugin.active = "yes"
+            self.config.set("plugin", plugin)
+        else:
+            if isinstance(plugins, XmlDictObject):
+                plugins = [plugins,]
+            for plugin in plugins:
+                if plugin.get("name") == "N900":
+                    # XXX
+                    plugin._attrs["active"] = "yes"
+                    break
+            self.config.set("plugins", plugins)
+        self.reload_config()
+
+    def disable_media_server(self):
+        plugins = self.config.get("plugin")
+        if plugins:
+            if isinstance(plugins, XmlDictObject):
+                plugins = [plugins,]
+            for plugin in plugins:
+                if plugin.get("name") == "N900":
+                    # XXX
+                    plugin._attrs["active"] = "no"
+                    break
+            self.config.set("plugins", plugins)
+            self.reload_config()
+
+    def media_server_enabled(self):
+        plugins = self.config.get("plugin")
+        if plugins:
+            if isinstance(plugins, XmlDictObject):
+                plugins = [plugins,]
+            print type(plugins), repr(plugins)
+            for plugin in plugins:
+                # XXX
+                if plugin.get("name") == "N900" and \
+                   plugin._attrs["active"] == "yes":
+                    return True
+        return False
+
     def start_coherence(self, restart=False):
+        def start():
+            if self.config.get("mirabeau").get("account"):
+                self.enable_mirabeau()
+            else:
+                self.disable_mirabeau()
+            self.coherence_instance = Coherence(self.config)
+
         if restart:
             if self.coherence_instance:
-                dfr = self.coherence_instance.shutdown()
-                dfr.addCallback(lambda result: self.startCoherence())
+                dfr = self.coherence_instance.shutdown(force=True)
+                dfr.addCallback(lambda result: self.start_coherence())
                 return dfr
             else:
-                self.coherence_instance = Coherence(self.config)
+               start()
         else:
-            self.coherence_instance = Coherence(self.config)
+            start()
         if self.coherence_instance:
-            mirabeau_instance = self.coherence_instance.mirabeau
+            coherence = self.coherence_instance
+            mirabeau_instance = coherence.mirabeau
             conn_obj = mirabeau_instance.tube_publisher.conn[CONN_INTERFACE]
             handle = conn_obj.connect_to_signal('StatusChanged',
                                                 self.status_changed_cb)
             self.status_update_handle = handle
 
+            coherence.connect(self.device_found, 'Coherence.UPnP.RootDevice.detection_completed')
+            coherence.connect(self.device_removed, 'Coherence.UPnP.RootDevice.removed')
+            for device in coherence.devices:
+                self.device_found(device)
+
     def stop_coherence(self):
         def stopped(result):
             self.coherence_instance.clear()
             self.coherence_instance = None
-            print ">>", result
 
-        dfr = self.coherence_instance.shutdown()
+        dfr = self.coherence_instance.shutdown(force=True)
         dfr.addBoth(stopped)
         return dfr
 
@@ -189,47 +263,15 @@ class MainWindow(hildon.StackableWindow):
             mirabeau_section.set("conference-server", dialog.get_conf_server())
             mirabeau_section.set("account", dialog.get_account())
             self.config.set("mirabeau", mirabeau_section)
-            self.config.save()
-            self.load_config()
+            self.reload_config()
 
-            # TODO: send notification using dbus
+            if dialog.ms_enabled():
+                self.enable_media_server()
+            else:
+                self.disable_media_server()
+            self.start_coherence(restart=True)
 
         dialog.destroy()
-
-    def open_local_devices(self, widget):
-        window = LocalDevicesWindow(self)
-        window.show_all()
-
-class LocalDevicesWindow(hildon.StackableWindow):
-
-    def __init__(self, parent):
-        super(LocalDevicesWindow, self).__init__()
-        self.main_window = parent
-        self.set_title(_("Local Devices"))
-
-        self.devices_view = hildon.GtkTreeView(gtk.HILDON_UI_MODE_EDIT)
-        model = gtk.ListStore(str)
-        self.devices_view.set_model(model)
-        column = gtk.TreeViewColumn('Name', gtk.CellRendererText(), text = 0)
-        self.devices_view.append_column(column)
-
-        self.devices_view.show()
-        self.add(self.devices_view)
-
-        coherence = self.main_window.coherence_instance
-        coherence.connect(self.device_found, 'Coherence.UPnP.RootDevice.detection_completed')
-        coherence.connect(self.device_removed, 'Coherence.UPnP.RootDevice.removed')
-        for device in coherence.devices:
-            self.device_found(device)
-
-    def device_found(self, device=None):
-        name = '%s (%s)' % (device.get_friendly_name(), ':'.join(device.get_device_type().split(':')[3:5]))
-        model = self.devices_view_view.get_model()
-        model.append([name])
-
-    def device_removed(self,usn=None):
-        print usn
-        # TODO
 
 class SettingsDialog(gtk.Dialog):
 
@@ -282,6 +324,12 @@ class SettingsDialog(gtk.Dialog):
         self.chatroom_hbox.pack_start(self.chatroom_entry, expand=True)
         self.vbox.pack_start(self.chatroom_hbox, expand=False)
 
+        # MS toggle
+        self.ms_toggle = hildon.CheckButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
+        self.ms_toggle.set_label("Share the media files of this device")
+        self.ms_toggle.set_active(parent.media_server_enabled())
+        self.vbox.pack_start(self.ms_toggle, expand=False)
+
         self.vbox.show_all()
 
     def get_chatroom(self):
@@ -294,12 +342,10 @@ class SettingsDialog(gtk.Dialog):
         selector = self.account_picker.get_selector()
         return self.accounts[selector.get_active(0)]
 
+    def ms_enabled(self):
+        return self.ms_toggle.get_active()
+
 if __name__ == '__main__':
-
-    def start():
-        main_window = MainWindow()
-        main_window.show_all()
-        gtk.main()
-
-    reactor.callWhenRunning(start)
+    main_window = MainWindow()
+    main_window.show_all()
     reactor.run()
