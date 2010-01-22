@@ -207,6 +207,29 @@ class LocalDevicesWindow(hildon.StackableWindow):
         self.main_window = parent
         self.set_title(_("Local Devices"))
 
+        self.devices_view = hildon.GtkTreeView(gtk.HILDON_UI_MODE_EDIT)
+        model = gtk.ListStore(str)
+        self.devices_view.set_model(model)
+        column = gtk.TreeViewColumn('Name', gtk.CellRendererText(), text = 0)
+        self.devices_view.append_column(column)
+
+        self.devices_view.show()
+        self.add(self.devices_view)
+
+        coherence = self.main_window.coherence_instance
+        coherence.connect(self.device_found, 'Coherence.UPnP.RootDevice.detection_completed')
+        coherence.connect(self.device_removed, 'Coherence.UPnP.RootDevice.removed')
+        for device in coherence.devices:
+            self.device_found(device)
+
+    def device_found(self, device=None):
+        name = '%s (%s)' % (device.get_friendly_name(), ':'.join(device.get_device_type().split(':')[3:5]))
+        model = self.devices_view_view.get_model()
+        model.append([name])
+
+    def device_removed(self,usn=None):
+        print usn
+        # TODO
 
 class SettingsDialog(gtk.Dialog):
 
