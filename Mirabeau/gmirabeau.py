@@ -2,7 +2,7 @@
 """
 dependencies:
 
-- python2.5-gst
+- python-gst0.10
 - python-dbus
 - python-hildon
 - python-gtk2
@@ -62,7 +62,7 @@ DEFAULT_CONFIG="""\
   </mirabeau>
   <plugin active="yes">
     <uuid>%(MR_UUID)s</uuid>
-    <name>Media Renderer</name>
+    <name>N900 Media Renderer</name>
     <backend>GStreamerPlayer</backend>
   </plugin>
 </config>
@@ -90,10 +90,11 @@ class MainWindow(hildon.StackableWindow):
         self.set_app_menu(self._create_menu())
         self.connect('delete-event', self._exit_cb)
 
+        self.devices = {}
         self.vbox = gtk.VBox()
 
         self.devices_view = hildon.GtkTreeView(gtk.HILDON_UI_MODE_EDIT)
-        model = gtk.ListStore(str)
+        model = gtk.ListStore(str, str)
         self.devices_view.set_model(model)
         column = gtk.TreeViewColumn('Name', gtk.CellRendererText(), text = 0)
         self.devices_view.append_column(column)
@@ -113,13 +114,25 @@ class MainWindow(hildon.StackableWindow):
         self.start_coherence()
 
     def device_found(self, device):
+        self.devices[device.get_usn()] = device
         name = device.get_friendly_name()
         model = self.devices_view.get_model()
-        model.append([name])
+        model.append([name, device.get_usn()])
 
     def device_removed(self, usn):
-        print usn
-        # TODO
+        try:
+            device = self.devices.pop(usn)
+        except KeyError:
+            # already removed, wtf?
+            return
+        model = self.devices_view.get_model()
+        tree_iter = model.get_iter_first()
+        while tree_iter:
+            iter_usn = model.get(tree_iter, 1)[0]
+            if iter_usn == usn:
+                model.remove(tree_iter)
+                break
+            tree_iter = model.iter_next(tree_iter)
 
     def _create_menu(self):
         menu = hildon.AppMenu()
@@ -179,21 +192,27 @@ class MainWindow(hildon.StackableWindow):
         return dirs
 
     def enable_media_server(self):
+        def generate_cfg():
+            directories = self.platform_media_directories()
+            opts = dict(uuid=MS_UUID, name="N900 Media files", content=",".join(directories),
+                        backend="FSStore", active="yes")
+            return XmlDictObject(initdict=opts)
+
         plugins = self.config.get("plugin")
         if not plugins:
-            directories = self.platform_media_directories()
-            opts = dict(uuid=MS_UUID, name="N900", content=",".join(directories),
-                        backend="FSStore", active="yes")
-            plugin = XmlDictObject(initdict=opts)
-            self.config.set("plugin", plugin)
+            self.config.set("plugin", generate_cfg())
         else:
             if isinstance(plugins, XmlDictObject):
                 plugins = [plugins,]
+            already_in_config = False
             for plugin in plugins:
                 if plugin.get("uuid") == MS_UUID:
                     plugin.active = "yes"
+                    already_in_config = True
                     break
-            self.config.set("plugins", plugins)
+            if not already_in_config:
+                plugins.append(generate_cfg())
+            self.config.set("plugin", plugins)
         self.reload_config()
 
     def disable_media_server(self):
@@ -205,7 +224,7 @@ class MainWindow(hildon.StackableWindow):
                 if plugin.get("uuid") == MS_UUID:
                     plugin.active = "no"
                     break
-            self.config.set("plugins", plugins)
+            self.config.set("plugin", plugins)
             self.reload_config()
 
     def media_server_enabled(self):
@@ -213,7 +232,6 @@ class MainWindow(hildon.StackableWindow):
         if plugins:
             if isinstance(plugins, XmlDictObject):
                 plugins = [plugins,]
-            print type(plugins), repr(plugins)
             for plugin in plugins:
                 if plugin.get("uuid") == MS_UUID and \
                    plugin.active == "yes":
@@ -230,8 +248,8 @@ class MainWindow(hildon.StackableWindow):
 
         if restart:
             if self.coherence_instance:
-                dfr = self.coherence_instance.shutdown(force=True)
-                dfr.addCallback(lambda result: self.start_coherence())
+                dfr = self.stop_coherence()
+                dfr.addCallback(lambda result: start())
                 return dfr
             else:
                start()
@@ -240,10 +258,11 @@ class MainWindow(hildon.StackableWindow):
         if self.coherence_instance:
             coherence = self.coherence_instance
             mirabeau_instance = coherence.mirabeau
-            conn_obj = mirabeau_instance.tube_publisher.conn[CONN_INTERFACE]
-            handle = conn_obj.connect_to_signal('StatusChanged',
-                                                self.status_changed_cb)
-            self.status_update_handle = handle
+            if mirabeau_instance:
+                conn_obj = mirabeau_instance.tube_publisher.conn[CONN_INTERFACE]
+                handle = conn_obj.connect_to_signal('StatusChanged',
+                                                    self.status_changed_cb)
+                self.status_update_handle = handle
 
             coherence.connect(self.device_found, 'Coherence.UPnP.RootDevice.detection_completed')
             coherence.connect(self.device_removed, 'Coherence.UPnP.RootDevice.removed')
@@ -252,8 +271,9 @@ class MainWindow(hildon.StackableWindow):
 
     def stop_coherence(self):
         def stopped(result):
-            self.coherence_instance.clear()
-            self.coherence_instance = None
+            if self.coherence_instance:
+                self.coherence_instance.clear()
+                self.coherence_instance = None
 
         dfr = self.coherence_instance.shutdown(force=True)
         dfr.addBoth(stopped)
