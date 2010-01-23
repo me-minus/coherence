@@ -1,4 +1,5 @@
 import sys, os
+import uuid
 
 import hildon
 import pygtk
@@ -47,6 +48,8 @@ DEFAULT_CONFIG="""\
   </mirabeau>
 </config>
 """
+
+MS_UUID = uuid.uuid5(uuid.NAMESPACE_DNS, 'coherence.org')
 
 """
 TODO:
@@ -157,19 +160,16 @@ class MainWindow(hildon.StackableWindow):
         plugins = self.config.get("plugin")
         if not plugins:
             directories = self.platform_media_directories()
-            opts = dict(uuid="33d68364-5bee-4dee-9ede-52afdd7baeaf",
-                        name="N900", content=",".join(directories),
-                        backend="FSStore")
+            opts = dict(uuid=MS_UUID, name="N900", content=",".join(directories),
+                        backend="FSStore", active="yes")
             plugin = XmlDictObject(initdict=opts)
-            plugin.active = "yes"
             self.config.set("plugin", plugin)
         else:
             if isinstance(plugins, XmlDictObject):
                 plugins = [plugins,]
             for plugin in plugins:
-                if plugin.get("name") == "N900":
-                    # XXX
-                    plugin._attrs["active"] = "yes"
+                if plugin.get("uuid") == MS_UUID:
+                    plugin.active = "yes"
                     break
             self.config.set("plugins", plugins)
         self.reload_config()
@@ -180,9 +180,8 @@ class MainWindow(hildon.StackableWindow):
             if isinstance(plugins, XmlDictObject):
                 plugins = [plugins,]
             for plugin in plugins:
-                if plugin.get("name") == "N900":
-                    # XXX
-                    plugin._attrs["active"] = "no"
+                if plugin.get("uuid") == MS_UUID:
+                    plugin.active = "no"
                     break
             self.config.set("plugins", plugins)
             self.reload_config()
@@ -194,9 +193,8 @@ class MainWindow(hildon.StackableWindow):
                 plugins = [plugins,]
             print type(plugins), repr(plugins)
             for plugin in plugins:
-                # XXX
-                if plugin.get("name") == "N900" and \
-                   plugin._attrs["active"] == "yes":
+                if plugin.get("uuid") == MS_UUID and \
+                   plugin.active == "yes":
                     return True
         return False
 
