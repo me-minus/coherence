@@ -1,3 +1,17 @@
+
+"""
+dependencies:
+
+- python2.5-gst
+- python-dbus
+- python-hildon
+- python-gtk2
+- python-telepathy
+- python-pkg-resources
+- python-setuptools
+- python-twisted
+"""
+
 import sys, os
 import uuid
 
@@ -46,10 +60,16 @@ DEFAULT_CONFIG="""\
    <protocol>jabber</protocol>
    <account>%(default_account)s</account>
   </mirabeau>
+  <plugin active="yes">
+    <uuid>%(MR_UUID)s</uuid>
+    <name>Media Renderer</name>
+    <backend>GStreamerPlayer</backend>
+  </plugin>
 </config>
 """
 
 MS_UUID = uuid.uuid5(uuid.NAMESPACE_DNS, 'coherence.org')
+MR_UUID = uuid.uuid5(uuid.NAMESPACE_DNS, 'gstreamer.org')
 
 """
 TODO:
@@ -129,7 +149,9 @@ class MainWindow(hildon.StackableWindow):
             except IndexError:
                 default_account = ''
 
-            cfg = DEFAULT_CONFIG % locals()
+            vars = locals()
+            vars["MR_UUID"] = MR_UUID
+            cfg = DEFAULT_CONFIG % vars
             fd = open(CONFIG_PATH, "w")
             fd.write(cfg)
             fd.close()
@@ -204,7 +226,7 @@ class MainWindow(hildon.StackableWindow):
                 self.enable_mirabeau()
             else:
                 self.disable_mirabeau()
-            self.coherence_instance = Coherence(self.config)
+            self.coherence_instance = Coherence(self.config.config)
 
         if restart:
             if self.coherence_instance:
