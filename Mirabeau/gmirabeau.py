@@ -1114,7 +1114,8 @@ class MediaRendererWindow(hildon.StackableWindow):
                 else:
                     duration = '%d:%02d' % (int(m),int(s))
                 max = (int(h) * 3600) + (int(m)*60) + int(s)
-                self.position_scale.set_range(0,max)
+                if max > 0:
+                    self.position_scale.set_range(0,max)
                 self.position_max_text.set_markup(duration)
                 actions = service.get_state_variable('CurrentTransportActions')
                 try:
