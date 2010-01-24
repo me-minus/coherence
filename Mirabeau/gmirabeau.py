@@ -364,7 +364,7 @@ class MediaServerBrowser(hildon.StackableWindow):
         super(MediaServerBrowser, self).__init__()
         self.set_title(device.get_friendly_name())
 
-        browse_view = MediaServerBrowseView(coherence, device)
+        browse_view = MediaServerBrowseView(self, coherence, device)
         browse_view.show()
         area = hildon.PannableArea()
         area.add(browse_view)
@@ -383,9 +383,10 @@ class MediaServerBrowseView(gtk.TreeView):
     MS_DIDL_COLUMN = 7
     MS_TOOLTIP_COLUMN = 8
 
-    def __init__(self, coherence, device):
+    def __init__(self, window, coherence, device):
         super(MediaServerBrowseView, self).__init__()
-        self._coherence = coherence
+        self._window = window
+        self.coherence = coherence
         self.device = device
         model = gtk.TreeStore(str, str, str, int, str, str, gtk.gdk.Pixbuf,
                               str, gtk.gdk.Pixbuf)
@@ -489,8 +490,15 @@ class MediaServerBrowseView(gtk.TreeView):
             url = model.get(iter, self.MS_SERVICE_PATH_COLUMN)[0]
             if url == '':
                 return
-            window = SelectMRWindow(self._coherence, didl_fragment, url)
-            window.show_all()
+            dialog = SelectMRDialog(self._window, self.coherence)
+            response = dialog.run()
+            if response == gtk.RESPONSE_ACCEPT:
+                media_render = dialog.get_media_renderer()
+                window = MediaRendererWindow(self.coherence, media_render)
+                window.load_media(didl_fragment, url)
+                window.show_all()
+
+            dialog.destroy()
 
     def browse(self, view, row_path, column, starting_index=0, requested_count=0,
                force=False, expand=False):
@@ -599,34 +607,32 @@ class MediaServerBrowseView(gtk.TreeView):
     def handle_error(self,error):
         print error
 
-class SelectMRWindow(hildon.StackableWindow):
 
-    def __init__(self, coherence, didl_fragment, url):
-        super(SelectMRWindow, self).__init__()
+class SelectMRDialog(gtk.Dialog):
+
+    def __init__(self, parent, coherence):
+        super(SelectMRDialog, self).__init__(parent=parent,
+                                             buttons = (gtk.STOCK_APPLY,
+                                                        gtk.RESPONSE_ACCEPT))
         self.set_title(_("Select a MediaRenderer"))
-        self._coherence = coherence
-        self._didl_fragment = didl_fragment
-        self._url = url
-
-        self.mr_list = DevicesView()
-        self.mr_list.connect('row-activated', self._row_activated_cb)
-        area = hildon.PannableArea()
-        area.add(self.mr_list)
-        area.show_all()
-        self.add(area)
-
-        mrs = []
-        for device in self._coherence.devices:
+        self.mrs = []
+        self.mediarenderer_picker = hildon.PickerButton(gtk.HILDON_SIZE_FINGER_HEIGHT,
+                                                        hildon.BUTTON_ARRANGEMENT_VERTICAL)
+        selector = hildon.TouchSelectorEntry(text = True)
+        self.mediarenderer_picker.set_title(_('Mediarenderer:'))
+        for device in coherence.devices:
             device_type = device.get_device_type().split(':')[3].lower()
             if device_type == "mediarenderer":
-                mrs.append(device)
-        self.mr_list.set_devices(mrs)
+                self.mrs.append(device)
+                selector.append_text(device.get_friendly_name())
 
-    def _row_activated_cb(self, view, path, column):
-        device = self.mr_list.get_device_from_path(path)
-        window = MediaRendererWindow(self._coherence, device)
-        window.load_media(self._didl_fragment, self._url)
-        window.show_all()
+        self.mediarenderer_picker.set_selector(selector)
+        self.vbox.add(self.mediarenderer_picker)
+        self.vbox.show_all()
+
+    def get_media_renderer(self):
+        selector = self.mediarenderer_picker.get_selector()
+        return self.mrs[selector.get_active(0)]
 
 class MediaRendererWindow(hildon.StackableWindow):
 
