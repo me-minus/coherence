@@ -19,6 +19,7 @@ import hildon
 import pygtk
 pygtk.require('2.0')
 import gtk
+import gobject
 import gettext
 import dbus
 
@@ -68,8 +69,8 @@ DEFAULT_CONFIG="""\
 </config>
 """
 
-MS_UUID = uuid.uuid5(uuid.NAMESPACE_DNS, 'coherence.org')
-MR_UUID = uuid.uuid5(uuid.NAMESPACE_DNS, 'gstreamer.org')
+MS_UUID = str(uuid.uuid5(uuid.NAMESPACE_DNS, 'coherence.org'))
+MR_UUID = str(uuid.uuid5(uuid.NAMESPACE_DNS, 'gstreamer.org'))
 
 """
 TODO:
@@ -90,17 +91,13 @@ class MainWindow(hildon.StackableWindow):
         self.set_app_menu(self._create_menu())
         self.connect('delete-event', self._exit_cb)
 
-        self.devices = {}
         self.vbox = gtk.VBox()
 
-        self.devices_view = hildon.GtkTreeView(gtk.HILDON_UI_MODE_EDIT)
-        model = gtk.ListStore(str, str)
-        self.devices_view.set_model(model)
-        column = gtk.TreeViewColumn('Name', gtk.CellRendererText(), text = 0)
-        self.devices_view.append_column(column)
-
-        self.devices_view.show()
-        self.vbox.pack_start(self.devices_view, expand=True)
+        self.devices_view = DevicesView()
+        self.devices_view.connect('row-activated', self._row_activated_cb)
+        self.area = hildon.PannableArea()
+        self.area.add(self.devices_view)
+        self.vbox.pack_start(self.area, expand=True)
 
         self.chatroom_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
         self.chatroom_button.set_label(_("Chatroom"))
@@ -113,26 +110,15 @@ class MainWindow(hildon.StackableWindow):
         self.load_config()
         self.start_coherence()
 
-    def device_found(self, device):
-        self.devices[device.get_usn()] = device
-        name = device.get_friendly_name()
-        model = self.devices_view.get_model()
-        model.append([name, device.get_usn()])
-
-    def device_removed(self, usn):
-        try:
-            device = self.devices.pop(usn)
-        except KeyError:
-            # already removed, wtf?
-            return
-        model = self.devices_view.get_model()
-        tree_iter = model.get_iter_first()
-        while tree_iter:
-            iter_usn = model.get(tree_iter, 1)[0]
-            if iter_usn == usn:
-                model.remove(tree_iter)
-                break
-            tree_iter = model.iter_next(tree_iter)
+    def _row_activated_cb(self, view, path, column):
+        device = self.devices_view.get_device_from_path(path)
+        device_type = device.get_device_type().split(':')[3].lower()
+        if device_type == 'mediaserver':
+            print "browse MS"
+        elif device_type == 'mediarenderer':
+            print "control MR"
+        else:
+            print "can't inspect device %r" % device.get_friendly_name()
 
     def _create_menu(self):
         menu = hildon.AppMenu()
@@ -169,7 +155,7 @@ class MainWindow(hildon.StackableWindow):
             fd.write(cfg)
             fd.close()
 
-        self.config = Config(CONFIG_PATH, root='config')
+        self.config = Config(CONFIG_PATH, root='config', element2attr_mappings={'active':'active'})
 
     def reload_config(self):
         self.config.save()
@@ -264,10 +250,11 @@ class MainWindow(hildon.StackableWindow):
                                                     self.status_changed_cb)
                 self.status_update_handle = handle
 
-            coherence.connect(self.device_found, 'Coherence.UPnP.RootDevice.detection_completed')
-            coherence.connect(self.device_removed, 'Coherence.UPnP.RootDevice.removed')
-            for device in coherence.devices:
-                self.device_found(device)
+            coherence.connect(self.devices_view.device_found,
+                              'Coherence.UPnP.RootDevice.detection_completed')
+            coherence.connect(self.devices_view.device_removed,
+                              'Coherence.UPnP.RootDevice.removed')
+            self.devices_view.set_devices(coherence.devices)
 
     def stop_coherence(self):
         def stopped(result):
@@ -312,6 +299,57 @@ class MainWindow(hildon.StackableWindow):
             self.start_coherence(restart=True)
 
         dialog.destroy()
+
+class DevicesView(gtk.TreeView):
+
+    DEVICE_NAME_COLUMN = 0
+    DEVICE_OBJECT_COLUMN = 1
+
+    def __init__(self):
+        super(DevicesView, self).__init__()
+        model = gtk.ListStore(str, gobject.TYPE_PYOBJECT)
+        device_renderer = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('Name', device_renderer, text = self.DEVICE_NAME_COLUMN)
+        self.set_model(model)
+        self.append_column(column)
+        self.sort_ascending()
+
+    def set_devices(self, devices):
+        model = self.get_model()
+        model.clear()
+        for device in devices:
+            row = {self.DEVICE_NAME_COLUMN: device.get_friendly_name(),
+                   self.DEVICE_OBJECT_COLUMN: device
+                  }
+            model.append(row.values())
+
+    def get_device_from_path(self, path):
+        model = self.get_model()
+        return model[path][self.DEVICE_OBJECT_COLUMN]
+
+    def device_found(self, device):
+        model = self.get_model()
+        row = {self.DEVICE_NAME_COLUMN: device.get_friendly_name(),
+               self.DEVICE_OBJECT_COLUMN: device}
+        model.append(row.values())
+
+    def device_removed(self, usn):
+        model = self.get_model()
+        if model:
+            tree_iter = model.get_iter_first()
+            while tree_iter:
+                iter_device = model.get(tree_iter, self.DEVICE_OBJECT_COLUMN)[0]
+                if iter_device.get_usn() == usn:
+                    model.remove(tree_iter)
+                    break
+                tree_iter = model.iter_next(tree_iter)
+
+    def sort_descending(self):
+        self.get_model().set_sort_column_id(self.DEVICE_NAME_COLUMN, gtk.SORT_DESCENDING)
+
+    def sort_ascending(self):
+        self.get_model().set_sort_column_id(self.DEVICE_NAME_COLUMN, gtk.SORT_ASCENDING)
+
 
 class SettingsDialog(gtk.Dialog):
 
