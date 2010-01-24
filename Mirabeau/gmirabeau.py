@@ -627,6 +627,10 @@ class SelectMRDialog(gtk.Dialog):
                 selector.append_text(device.get_friendly_name())
 
         self.mediarenderer_picker.set_selector(selector)
+
+        if self.mrs:
+            self.mediarenderer_picker.set_active(0)
+
         self.vbox.add(self.mediarenderer_picker)
         self.vbox.show_all()
 
@@ -758,6 +762,11 @@ class MediaRendererWindow(hildon.StackableWindow):
             service.subscribe_for_variable('TrackDuration', callback=self.state_variable_change)
 
         self.get_position()
+        self.connect("delete-event", self.clean)
+
+    def clean(self, widget, event):
+        if self.position_loop.running:
+            self.position_loop.stop()
 
     def make_button(self,icon,callback=None,sensitive=True):
         icon = resource_filename(__name__, os.path.join('icons',icon))
@@ -798,8 +807,10 @@ class MediaRendererWindow(hildon.StackableWindow):
         if variable.name == 'CurrentTrackMetaData':
             if variable.value != None and len(variable.value)>0:
                 try:
-                    from coherence.upnp.core import DIDLLite
                     elt = DIDLLite.DIDLElement.fromString(variable.value)
+                except SyntaxError:
+                    print "seems we haven't got an XML string", repr(variable.value)
+                else:
                     for item in elt.getItems():
                         self.title_text.set_markup("<b>%s</b>" % item.title)
                         if item.album != None:
@@ -833,11 +844,6 @@ class MediaRendererWindow(hildon.StackableWindow):
                                 self.album_art_image.set_from_pixbuf(self.blank_icon)
                         else:
                             self.album_art_image.set_from_pixbuf(self.blank_icon)
-
-
-                except SyntaxError:
-                    #print "seems we haven't got an XML string"
-                    return
             else:
                 self.title_text.set_markup('')
                 self.album_text.set_markup('')
@@ -1035,10 +1041,10 @@ class MediaRendererWindow(hildon.StackableWindow):
         d.addErrback(self.handle_error)
         return d
 
-    def set_uri(self,url,didl):
+    def set_uri(self, uri, didl):
         service = self.device.get_service_by_type('AVTransport')
         action = service.get_action('SetAVTransportURI')
-        d = action.call(InstanceID=0,CurrentURI=url,
+        d = action.call(InstanceID=0,CurrentURI=uri,
                                      CurrentURIMetaData=didl)
         d.addCallback(self.handle_result)
         d.addErrback(self.handle_error)
