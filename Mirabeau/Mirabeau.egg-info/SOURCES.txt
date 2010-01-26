@@ -1,0 +1,15 @@
+setup.py
+Mirabeau.egg-info/PKG-INFO
+Mirabeau.egg-info/SOURCES.txt
+Mirabeau.egg-info/dependency_links.txt
+Mirabeau.egg-info/requires.txt
+Mirabeau.egg-info/top_level.txt
+bin/mirabeau
+mirabeau/__init__.py
+mirabeau/main.py
+mirabeau/maemo/__init__.py
+mirabeau/maemo/constants.py
+mirabeau/maemo/dialogs.py
+mirabeau/maemo/main.py
+mirabeau/maemo/media_renderer.py
+mirabeau/maemo/media_server.py

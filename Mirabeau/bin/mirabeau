@@ -1,0 +1,13 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Licensed under the MIT license
+# http://opensource.org/licenses/mit-license.php
+
+# Copyright 2010 - Philippe Normand <phil@base-art.net>
+
+import sys
+from mirabeau import main
+
+if __name__ == '__main__':
+    sys.exit(main.run(sys.argv))
