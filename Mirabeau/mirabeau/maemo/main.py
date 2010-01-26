@@ -45,20 +45,13 @@ class MainWindow(hildon.StackableWindow):
         self.set_app_menu(self._create_menu())
         self.connect('delete-event', self._exit_cb)
 
-        self.vbox = gtk.VBox()
-
         self.devices_view = DevicesView()
         self.devices_view.connect('row-activated', self._row_activated_cb)
-        self.area = hildon.PannableArea()
-        self.area.add(self.devices_view)
-        self.vbox.pack_start(self.area, expand=True)
 
-        self.chatroom_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
-        self.chatroom_button.set_label(_("Chatroom"))
-        self.vbox.pack_start(self.chatroom_button, expand=False)
-
-        self.add(self.vbox)
-        self.vbox.show_all()
+        area = hildon.PannableArea()
+        area.add(self.devices_view)
+        area.show_all()
+        self.add(area)
 
         self.status_changed_cb(CONNECTION_STATUS_DISCONNECTED, "")
         self.load_config()
@@ -70,11 +63,9 @@ class MainWindow(hildon.StackableWindow):
         device = self.devices_view.get_device_from_path(path)
         device_type = device.get_device_type().split(':')[3].lower()
         if device_type == 'mediaserver':
-            print "browse MS"
             window = media_server.MediaServerBrowser(self.coherence_instance, device)
             window.show_all()
         elif device_type == 'mediarenderer':
-            print "control MR"
             window = media_renderer.MediaRendererWindow(self.coherence_instance, device)
             window.show_all()
         else:
@@ -95,6 +86,10 @@ class MainWindow(hildon.StackableWindow):
         self.status_button.show()
         menu.append(self.status_button)
 
+        self.chatroom_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
+        self.chatroom_button.set_label(_("Chatroom"))
+        #menu.append(self.chatroom)
+
         menu.show_all()
         return menu
 
@@ -105,6 +100,15 @@ class MainWindow(hildon.StackableWindow):
         if not os.path.exists(BASEDIR):
             os.makedirs(BASEDIR)
         if not os.path.exists(CONFIG_PATH):
+            # first run, a wizard might fit better here, probably.
+            text = _("""\
+Welcome to Mirabeau! It is currently bound to your local network,
+if you want to browse remote MediaServers please edit the Settings.
+A valid GTalk/Jabber account is needed.""")
+            note = hildon.hildon_note_new_information(self, text)
+            response = note.run()
+            note.destroy()
+
             default_account = ''
             vars = locals()
             vars["MR_UUID"] = MR_UUID
@@ -257,6 +261,7 @@ class MainWindow(hildon.StackableWindow):
             self.start_coherence(restart=True)
 
         dialog.destroy()
+
 
 class DevicesView(gtk.TreeView):
 
