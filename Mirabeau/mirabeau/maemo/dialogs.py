@@ -53,7 +53,7 @@ class SelectMRDialog(gtk.Dialog):
 
 class SettingsDialog(gtk.Dialog):
 
-    def __init__(self, parent):
+    def __init__(self, parent, mirabeau_section, media_server_enabled):
         super(SettingsDialog, self).__init__(parent=parent,
                                              buttons = (gtk.STOCK_SAVE,
                                                         gtk.RESPONSE_ACCEPT))
@@ -61,7 +61,6 @@ class SettingsDialog(gtk.Dialog):
 
         self.accounts = []
         bus = dbus.SessionBus()
-        mirabeau_section = parent.config.get("mirabeau")
 
         # account
         self.account_picker = hildon.PickerButton(gtk.HILDON_SIZE_FINGER_HEIGHT,
@@ -106,7 +105,7 @@ class SettingsDialog(gtk.Dialog):
         # MS toggle
         self.ms_toggle = hildon.CheckButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
         self.ms_toggle.set_label("Share the media files of this device")
-        self.ms_toggle.set_active(parent.media_server_enabled())
+        self.ms_toggle.set_active(media_server_enabled)
         self.vbox.pack_start(self.ms_toggle, expand=False)
 
         self.vbox.show_all()

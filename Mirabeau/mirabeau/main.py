@@ -10,9 +10,9 @@ from twisted.internet import gtk2reactor
 gtk2reactor.install()
 from twisted.internet import reactor
 
-from mirabeau.maemo.main import MainWindow
+from mirabeau import controller
 
 def run(*args):
-    main_window = MainWindow()
-    main_window.show_all()
+    ctrl = controller.MirabeauController()
+    ctrl.start()
     reactor.run()
