@@ -17,7 +17,8 @@ _ = gettext.gettext
 
 from coherence.extern.telepathy import connect
 
-from telepathy.interfaces import ACCOUNT_MANAGER, ACCOUNT
+from telepathy.interfaces import ACCOUNT_MANAGER, ACCOUNT, \
+     CONNECTION_INTERFACE_ALIASING, CONNECTION_INTERFACE_SIMPLE_PRESENCE
 
 class SelectMRDialog(gtk.Dialog):
 
@@ -57,7 +58,7 @@ class SettingsDialog(gtk.Dialog):
         super(SettingsDialog, self).__init__(parent=parent,
                                              buttons = (gtk.STOCK_SAVE,
                                                         gtk.RESPONSE_ACCEPT))
-        self.set_title("Settings")
+        self.set_title(_("Settings"))
 
         self.accounts = []
         bus = dbus.SessionBus()
@@ -71,7 +72,11 @@ class SettingsDialog(gtk.Dialog):
             account_obj = bus.get_object(ACCOUNT_MANAGER, account_obj_path)
             norm_name = account_obj.Get(ACCOUNT, 'NormalizedName')
             nick_name = account_obj.Get(ACCOUNT, 'Nickname')
-            label = "%s - %s" % (nick_name, norm_name)
+            parameters = account_obj.Get(ACCOUNT, 'Parameters')
+            if "" in (nick_name, norm_name):
+                label = parameters["account"]
+            else:
+                label = "%s - %s" % (nick_name, norm_name)
             selector.append_text(label)
             self.accounts.append((account_obj_path, nick_name))
 
@@ -104,7 +109,7 @@ class SettingsDialog(gtk.Dialog):
 
         # MS toggle
         self.ms_toggle = hildon.CheckButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
-        self.ms_toggle.set_label("Share the media files of this device")
+        self.ms_toggle.set_label(_("Share the media files of this device"))
         self.ms_toggle.set_active(media_server_enabled)
         self.vbox.pack_start(self.ms_toggle, expand=False)
 
@@ -136,3 +141,36 @@ class SettingsDialog(gtk.Dialog):
 
     def ms_enabled(self):
         return self.ms_toggle.get_active()
+
+class ContactsDialog(hildon.PickerDialog):
+
+    def __init__(self, parent, coherence):
+        super(ContactsDialog, self).__init__(parent=parent)
+        self.set_title(_("Select contacts"))
+        self.set_done_label(_("Done"))
+
+        roster = coherence.mirabeau.tube_publisher.roster["subscribe"]
+        self.contacts = []
+        selector = hildon.TouchSelector()
+        store = gtk.ListStore(str)
+        for handle_id, infos in roster.iteritems():
+            alias = infos["%s/alias" % CONNECTION_INTERFACE_ALIASING]
+            presence = infos["%s/presence" % CONNECTION_INTERFACE_SIMPLE_PRESENCE]
+            label = "%s (%s)" % (alias, presence[1])
+            item_iter = store.append()
+            store.set(item_iter, 0, label  )
+            self.contacts.append((handle_id, alias))
+
+        column = selector.append_text_column(store, 0)
+
+        renderer = gtk.CellRendererText()
+        column.pack_start(renderer)
+
+        selector.set_column_selection_mode(hildon.TOUCH_SELECTOR_SELECTION_MODE_MULTIPLE)
+        self.set_selector(selector)
+
+    def get_contacts(self):
+        selector = self.get_selector()
+        indexes = [ c[0] for c in selector.get_selected_rows(0)]
+        contacts = [self.contacts[idx] for idx in indexes]
+        return contacts

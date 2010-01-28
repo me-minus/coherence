@@ -27,7 +27,8 @@ from telepathy.interfaces import CONN_INTERFACE
 from telepathy.constants import CONNECTION_STATUS_CONNECTED, \
      CONNECTION_STATUS_DISCONNECTED, CONNECTION_STATUS_CONNECTING
 
-from mirabeau.maemo import media_renderer, media_server, dialogs
+from mirabeau.maemo import media_renderer, media_server, dialogs, \
+     roster
 
 class MainWindow(hildon.StackableWindow):
 
@@ -112,6 +113,11 @@ A valid GTalk/Jabber account is needed.""")
         self.chatroom_button.set_label(_("Chatroom"))
         #menu.append(self.chatroom)
 
+        self.spread_button = hildon.GtkButton(gtk.HILDON_SIZE_FINGER_HEIGHT)
+        self.spread_button.set_label(_("Invite friends"))
+        self.spread_button.connect('clicked', self.invite_friends)
+        menu.append(self.spread_button)
+
         menu.show_all()
         return menu
 
@@ -144,6 +150,16 @@ A valid GTalk/Jabber account is needed.""")
                                             dialog.ms_enabled())
 
         dialog.destroy()
+
+    def invite_friends(self, widget):
+        coherence = self.controller.coherence_instance
+        if not coherence:
+            return
+        mirabeau_section = self.controller.config.get("mirabeau")
+        window = roster.InviteFriendsWindow(coherence,
+                                            mirabeau_section["chatroom"],
+                                            mirabeau_section["conference-server"])
+        window.show_all()
 
 class DevicesView(gtk.TreeView):
 
