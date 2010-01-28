@@ -38,6 +38,7 @@ class InviteFriendsWindow(hildon.StackableWindow):
         to_button.connect("clicked", self._select_contacts)
         to_box.pack_start(to_button, expand=False)
         self.to_entry = hildon.Entry(gtk.HILDON_SIZE_AUTO)
+        self.to_entry.set_sensitive(False)
         to_box.pack_start(self.to_entry)
         vbox.pack_start(to_box, expand=False)
 
@@ -76,7 +77,13 @@ Hi! Join me in the tubes of the interwebs! It is all explained there:
         buf = self.text_view.get_buffer()
         text = buf.get_text(buf.get_iter_at_offset(0), buf.get_iter_at_offset(-1))
         client = self.coherence.mirabeau.tube_publisher
-        for handle_id in self.contact_handles:
-            client.send_message(handle_id, text)
-        # TODO: display delivery notification
-        self.destroy()
+        if self.contact_handles:
+            for handle_id in self.contact_handles:
+                client.send_message(handle_id, text)
+            # TODO: display delivery notification
+            self.destroy()
+        else:
+            text = _("Please select at least one contact")
+            note = hildon.hildon_note_new_information(self, text)
+            response = note.run()
+            note.destroy()

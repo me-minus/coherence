@@ -153,7 +153,7 @@ A valid GTalk/Jabber account is needed.""")
 
     def invite_friends(self, widget):
         coherence = self.controller.coherence_instance
-        if not coherence:
+        if not coherence or not coherence.mirabeau:
             return
         mirabeau_section = self.controller.config.get("mirabeau")
         window = roster.InviteFriendsWindow(coherence,
