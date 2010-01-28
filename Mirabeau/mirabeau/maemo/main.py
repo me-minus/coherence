@@ -139,10 +139,14 @@ A valid GTalk/Jabber account is needed.""")
         dirs = [c for c in expanded if os.path.isdir(c)]
         return dirs
 
-    def enable_media_server(self):
-        def generate_cfg():
+    def enable_media_server(self, nickname=None):
+        nickname = nickname or "N900"
+        name_template = _("%(nickname)s Media Files")
+
+        def generate_cfg(nickname):
             directories = self.platform_media_directories()
-            opts = dict(uuid=MS_UUID, name="N900 Media files", content=",".join(directories),
+            name = name_template % locals()
+            opts = dict(uuid=MS_UUID, name=name, content=",".join(directories),
                         backend="FSStore", active="yes")
             return XmlDictObject(initdict=opts)
 
@@ -156,10 +160,11 @@ A valid GTalk/Jabber account is needed.""")
             for plugin in plugins:
                 if plugin.get("uuid") == MS_UUID:
                     plugin.active = "yes"
+                    plugin.name = name_template % locals()
                     already_in_config = True
                     break
             if not already_in_config:
-                plugins.append(generate_cfg())
+                plugins.append(generate_cfg(nickname))
             self.config.set("plugin", plugins)
         self.reload_config()
 
@@ -185,6 +190,20 @@ A valid GTalk/Jabber account is needed.""")
                    plugin.active == "yes":
                     return True
         return False
+
+    def set_media_renderer_name(self, nickname=None):
+        nickname = nickname or "N900"
+        name_template = _("%(nickname)s Media Renderer")
+        plugins = self.config.get("plugin")
+        if plugins:
+            if isinstance(plugins, XmlDictObject):
+                plugins = [plugins,]
+            for plugin in plugins:
+                if plugin.get("uuid") == MR_UUID:
+                    plugin.name = name_template % locals()
+                    break
+            self.config.set("plugin", plugins)
+            self.reload_config()
 
     def start_coherence(self, restart=False):
         def start():
@@ -254,8 +273,10 @@ A valid GTalk/Jabber account is needed.""")
             self.config.set("mirabeau", mirabeau_section)
             self.reload_config()
 
+            nickname = dialog.get_account_nickname()
+            self.set_media_renderer_name(nickname)
             if dialog.ms_enabled():
-                self.enable_media_server()
+                self.enable_media_server(nickname=nickname)
             else:
                 self.disable_media_server()
             self.start_coherence(restart=True)

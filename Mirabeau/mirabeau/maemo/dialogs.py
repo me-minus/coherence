@@ -59,7 +59,7 @@ class SettingsDialog(gtk.Dialog):
                                                         gtk.RESPONSE_ACCEPT))
         self.set_title("Settings")
 
-        self.accounts = connect.gabble_accounts()
+        self.accounts = []
         bus = dbus.SessionBus()
         mirabeau_section = parent.config.get("mirabeau")
 
@@ -68,12 +68,13 @@ class SettingsDialog(gtk.Dialog):
                                                   hildon.BUTTON_ARRANGEMENT_VERTICAL)
         selector = hildon.TouchSelectorEntry(text = True)
         self.account_picker.set_title(_('Account:'))
-        for account_obj_path in self.accounts:
+        for account_obj_path in connect.gabble_accounts():
             account_obj = bus.get_object(ACCOUNT_MANAGER, account_obj_path)
             norm_name = account_obj.Get(ACCOUNT, 'NormalizedName')
             nick_name = account_obj.Get(ACCOUNT, 'Nickname')
             label = "%s - %s" % (nick_name, norm_name)
             selector.append_text(label)
+            self.accounts.append((account_obj_path, nick_name))
 
         self.account_picker.set_selector(selector)
 
@@ -118,7 +119,21 @@ class SettingsDialog(gtk.Dialog):
 
     def get_account(self):
         selector = self.account_picker.get_selector()
-        return self.accounts[selector.get_active(0)]
+        active = selector.get_active(0)
+        path = ""
+        if active != -1:
+            account = self.accounts[active]
+            path = account[0]
+        return path
+
+    def get_account_nickname(self):
+        selector = self.account_picker.get_selector()
+        active = selector.get_active(0)
+        name = None
+        if active != -1:
+            account = self.accounts[active]
+            name = account[1]
+        return name
 
     def ms_enabled(self):
         return self.ms_toggle.get_active()
