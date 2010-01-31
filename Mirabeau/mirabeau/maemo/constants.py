@@ -5,7 +5,7 @@
 
 # Copyright 2010 - Philippe Normand <phil@base-art.net>
 
-import uuid, os
+import uuid, os, platform
 
 BASEDIR = os.path.expanduser("~/.config")
 CONFIG_PATH = os.path.join(BASEDIR, "mirabeau.xml")
@@ -30,5 +30,6 @@ DEFAULT_CONFIG="""\
 </config>
 """
 
-MS_UUID = str(uuid.uuid5(uuid.NAMESPACE_DNS, 'coherence.org'))
-MR_UUID = str(uuid.uuid5(uuid.NAMESPACE_DNS, 'gstreamer.org'))
+hostname = platform.uname()[1]
+MS_UUID = str(uuid.uuid5(uuid.NAMESPACE_DNS, '%s.coherence.org' % hostname))
+MR_UUID = str(uuid.uuid5(uuid.NAMESPACE_DNS, '%s.gstreamer.org' % hostname))
