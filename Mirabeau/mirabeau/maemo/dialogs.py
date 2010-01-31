@@ -64,11 +64,14 @@ class SettingsDialog(gtk.Dialog):
         bus = dbus.SessionBus()
 
         # account
+        conf_account = mirabeau_section.get("account")
+        index = -1
+        accounts = connect.gabble_accounts()
         self.account_picker = hildon.PickerButton(gtk.HILDON_SIZE_FINGER_HEIGHT,
                                                   hildon.BUTTON_ARRANGEMENT_VERTICAL)
         selector = hildon.TouchSelectorEntry(text = True)
         self.account_picker.set_title(_('Account:'))
-        for account_obj_path in connect.gabble_accounts():
+        for account_obj_path in accounts:
             account_obj = bus.get_object(ACCOUNT_MANAGER, account_obj_path)
             norm_name = account_obj.Get(ACCOUNT, 'NormalizedName')
             nick_name = account_obj.Get(ACCOUNT, 'Nickname')
@@ -79,12 +82,11 @@ class SettingsDialog(gtk.Dialog):
                 label = "%s - %s" % (nick_name, norm_name)
             selector.append_text(label)
             self.accounts.append((account_obj_path, nick_name))
+            if account_obj_path == conf_account:
+                index = accounts.index(account_obj_path)
 
         self.account_picker.set_selector(selector)
-
-        conf_account = mirabeau_section.get("account")
-        if conf_account and conf_account in self.accounts:
-            index = self.accounts.index(conf_account)
+        if index > -1:
             self.account_picker.set_active(index)
 
         self.vbox.pack_start(self.account_picker, expand=False)
@@ -158,7 +160,7 @@ class ContactsDialog(hildon.PickerDialog):
             presence = infos["%s/presence" % CONNECTION_INTERFACE_SIMPLE_PRESENCE]
             label = "%s (%s)" % (alias, presence[1])
             item_iter = store.append()
-            store.set(item_iter, 0, label  )
+            store.set(item_iter, 0, label)
             self.contacts.append((handle_id, alias))
 
         column = selector.append_text_column(store, 0)
