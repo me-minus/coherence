@@ -72,7 +72,12 @@ A valid GTalk/Jabber account is needed.""")
                                              self.status_changed_cb)
                 self.status_changed_cb(connection.GetStatus(), '')
 
-            mirabeau_instance.tube_publisher.connection_dfr.addCallback(got_connection)
+            def got_error(failure):
+                # TODO: display in UI
+                print "ERROR, ", failure
+
+            mirabeau_instance.tube_publisher.connection_dfr.addCallbacks(got_connection,
+                                                                         got_error)
 
         coherence.connect(self.devices_view.device_found,
                           'Coherence.UPnP.RootDevice.detection_completed')
