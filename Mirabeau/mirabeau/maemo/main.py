@@ -70,6 +70,7 @@ A valid GTalk/Jabber account is needed.""")
             def got_connection(connection):
                 connection.connect_to_signal('StatusChanged',
                                              self.status_changed_cb)
+                self.status_changed_cb(connection.GetStatus(), '')
 
             mirabeau_instance.tube_publisher.connection_dfr.addCallback(got_connection)
 
