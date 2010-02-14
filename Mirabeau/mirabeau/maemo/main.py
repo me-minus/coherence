@@ -67,9 +67,12 @@ A valid GTalk/Jabber account is needed.""")
         coherence = self.controller.coherence_instance
         mirabeau_instance = coherence.mirabeau
         if mirabeau_instance:
-            conn_obj = mirabeau_instance.tube_publisher.conn[CONN_INTERFACE]
-            handle = conn_obj.connect_to_signal('StatusChanged',
-                                                self.status_changed_cb)
+            def got_connection(connection):
+                connection.connect_to_signal('StatusChanged',
+                                             self.status_changed_cb)
+
+            mirabeau_instance.tube_publisher.connection_dfr.addCallback(got_connection)
+
         coherence.connect(self.devices_view.device_found,
                           'Coherence.UPnP.RootDevice.detection_completed')
         coherence.connect(self.devices_view.device_removed,
