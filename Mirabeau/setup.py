@@ -31,8 +31,8 @@ setup(
     license = "MIT",
     packages=packages,
     scripts = ['bin/mirabeau'],
-    url = "http://coherence.beebits.net/wiki/Mirabeau",
-    download_url = 'http://coherence.beebits.net/download/Mirabeau-%s.tar.gz' % __version__,
+    url = "http://coherence-project.org/wiki/Mirabeau",
+    download_url = 'http://coherence-project.org/download/Mirabeau-%s.tar.gz' % __version__,
     keywords=['UPnP', 'DLNA'],
     classifiers = ['Development Status :: 4 - Beta',
                    'Environment :: X11 Applications :: GTK',
@@ -42,7 +42,7 @@ setup(
                 ],
 
     package_data = {
-        'mirabeau': ['/data/icons/*.png'],
+        'mirabeau': ['data/icons/*.png'],
     },
     install_requires=[
     'Coherence >= 0.6.7',
