@@ -155,7 +155,7 @@ class LocalDevices(UILoader):
             self.device_found(device)
 
     def device_found(self, device=None):
-        name = '%s (%s)' % (device.get_friendly_name(), ':'.join(device.get_device_type().split(':')[3:5]))
+        name = '%s (%s)' % (device.get_friendly_name(), device.get_friendly_device_type())
         devices = self.model.stringList()
         devices.append(name)
         self.model.setStringList(devices)

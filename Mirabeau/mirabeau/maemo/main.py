@@ -89,7 +89,7 @@ A valid GTalk/Jabber account is needed.""")
         if not self.controller.coherence_instance:
             return
         device = self.devices_view.get_device_from_path(path)
-        device_type = device.get_device_type().split(':')[3].lower()
+        device_type = device.get_friendly_device_type().lower()
         coherence_instance = self.controller.coherence_instance
         if device_type == 'mediaserver':
             window = media_server.MediaServerBrowser(coherence_instance, device)
@@ -195,10 +195,11 @@ class DevicesView(gtk.TreeView):
         return model[path][self.DEVICE_OBJECT_COLUMN]
 
     def device_found(self, device):
-        model = self.get_model()
-        row = {self.DEVICE_NAME_COLUMN: device.get_friendly_name(),
-               self.DEVICE_OBJECT_COLUMN: device}
-        model.append(row.values())
+        if device.get_friendly_device_type().lower() in ['mediarenderer','mediaserver']:
+            model = self.get_model()
+            row = {self.DEVICE_NAME_COLUMN: device.get_friendly_name(),
+                   self.DEVICE_OBJECT_COLUMN: device}
+            model.append(row.values())
 
     def device_removed(self, usn):
         model = self.get_model()

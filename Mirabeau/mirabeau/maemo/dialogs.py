@@ -33,8 +33,7 @@ class SelectMRDialog(gtk.Dialog):
         selector = hildon.TouchSelectorEntry(text = True)
         self.mediarenderer_picker.set_title(_('Mediarenderer:'))
         for device in coherence.devices:
-            device_type = device.get_device_type().split(':')[3].lower()
-            if device_type == "mediarenderer":
+            if device.get_friendly_device_type().lower() == "mediarenderer":
                 self.mrs.append(device)
                 selector.append_text(device.get_friendly_name())
 
