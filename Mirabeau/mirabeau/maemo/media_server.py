@@ -31,13 +31,13 @@ class MediaServerBrowser(hildon.StackableWindow):
         self.set_title(device.get_friendly_name())
 
         browse_view = MediaServerBrowseView(self, coherence, device)
-        browse_view.show()
+        #browse_view.show()
         area = hildon.PannableArea()
         area.add(browse_view)
         area.show_all()
         self.add(area)
 
-class MediaServerBrowseView(gtk.TreeView):
+class MediaServerBrowseView(hildon.GtkTreeView):
 
     MS_NAME_COLUMN = 0
     MS_NODE_ID_COLUMN = 1
@@ -50,7 +50,7 @@ class MediaServerBrowseView(gtk.TreeView):
     MS_TOOLTIP_COLUMN = 8
 
     def __init__(self, window, coherence, device):
-        super(MediaServerBrowseView, self).__init__()
+        hildon.GtkTreeView.__init__(self,gtk.HILDON_UI_MODE_NORMAL)
         self._window = window
         self.coherence = coherence
         self.device = device
@@ -68,8 +68,9 @@ class MediaServerBrowseView(gtk.TreeView):
         column.add_attribute(icon_cell, "pixbuf", self.MS_ICON_COLUMN)
         self.append_column(column)
 
-        self.connect("row-expanded", self.row_expanded)
-        self.connect("row-activated", self.row_activated)
+        self.connect("row-expanded", self.row_got_expanded)
+        self.connect("row-collapsed", self.row_got_collapsed)
+        self.connect("row-activated", self.row_got_activated)
 
         icon = resource_filename('mirabeau', os.path.join('data', 'icons','folder.png'))
         self.folder_icon = gtk.gdk.pixbuf_new_from_file(icon)
@@ -88,11 +89,11 @@ class MediaServerBrowseView(gtk.TreeView):
         service.subscribe_for_variable('SystemUpdateID', callback=self.state_variable_change)
 
         model = self.get_model()
-        item = model.append(None)
-        model.set_value(item, self.MS_ICON_COLUMN, self.folder_icon)
-        model.set_value(item, self.MS_NAME_COLUMN, 'root')
-        model.set_value(item, self.MS_NODE_ID_COLUMN, '0')
-        return self.browse_object('0', iter=item)
+        #item = model.append(None)
+        #model.set_value(item, self.MS_ICON_COLUMN, self.folder_icon)
+        #model.set_value(item, self.MS_NAME_COLUMN, 'root')
+        #model.set_value(item, self.MS_NODE_ID_COLUMN, '0')
+        self.browse_object('0')
 
     def state_variable_change( self, variable):
         name = variable.name
@@ -138,7 +139,7 @@ class MediaServerBrowseView(gtk.TreeView):
                     break
                     row_count += 1
 
-    def row_expanded(self, view, iter, row_path):
+    def row_got_expanded(self, view, iter, row_path):
         model = self.get_model()
         child = model.iter_children(iter)
         if child:
@@ -146,26 +147,34 @@ class MediaServerBrowseView(gtk.TreeView):
             if upnp_class == 'placeholder':
                 self.browse(view, row_path, None)
 
-    def row_activated(self, view, row_path, column):
+    def row_got_collapsed(self, view, iter, row_path):
+        model = self.get_model()
+
+    def row_got_activated(self, view, row_path, column):
         model = self.get_model()
         iter = model.get_iter(row_path)
-        child = model.iter_children(iter)
-        if not child:
-            # this is a leaf, let's play it
-            didl_fragment = model.get(iter, self.MS_DIDL_COLUMN)[0]
-            url = model.get(iter, self.MS_SERVICE_PATH_COLUMN)[0]
-            if url == '':
-                return
-            dialog = dialogs.SelectMRDialog(self._window, self.coherence)
-            response = dialog.run()
-            if response == gtk.RESPONSE_ACCEPT:
-                media_render_device = dialog.get_media_renderer()
-                window = media_renderer.MediaRendererWindow(self.coherence,
-                                                            media_render_device)
-                window.load_media(didl_fragment, url)
-                window.show_all()
+        upnp_class = model.get(iter, self.MS_UPNP_CLASS_COLUMN)[0]
+        if upnp_class.startswith('object.container'):
+            if view.row_expanded(row_path):
+                view.collapse_row(row_path)
+            return
 
-            dialog.destroy()
+        # FIXME, only when we have a Resource item, then play it
+        # this is a leaf, let's play it
+        didl_fragment = model.get(iter, self.MS_DIDL_COLUMN)[0]
+        url = model.get(iter, self.MS_SERVICE_PATH_COLUMN)[0]
+        if url == '':
+            return
+        dialog = dialogs.SelectMRDialog(self._window, self.coherence)
+        response = dialog.run()
+        if response == gtk.RESPONSE_ACCEPT:
+            media_render_device = dialog.get_media_renderer()
+            window = media_renderer.MediaRendererWindow(self.coherence,
+                                                        media_render_device)
+            window.load_media(didl_fragment, url)
+            window.show_all()
+
+        dialog.destroy()
 
     def browse(self, view, row_path, column, starting_index=0, requested_count=0,
                force=False, expand=False):
@@ -183,33 +192,32 @@ class MediaServerBrowseView(gtk.TreeView):
                     return
 
         object_id = model.get(iter, self.MS_NODE_ID_COLUMN)[0]
-        return self.browse_object(object_id, iter=iter, view=view, row_path=row_path,
-                                  starting_index=starting_index,
-                                  requested_count=requested_count,
-                                  force=force, expand=expand)
+        self.browse_object(object_id, iter=iter, view=view, row_path=row_path,
+                              starting_index=starting_index,
+                              requested_count=requested_count,
+                              force=force, expand=expand)
 
     def browse_object(self, object_id, iter=None, view=None, row_path=None,
                       starting_index=0, requested_count=0,
                       force=False, expand=False):
         model = self.get_model()
-        if not iter:
-            iter = model.append(None)
 
-        def reply(r):
-            child = model.iter_children(iter)
-            if child:
-                upnp_class = model.get(child, self.MS_UPNP_CLASS_COLUMN)[0]
-                if upnp_class == 'placeholder':
-                    model.remove(child)
+        def reply(r,service):
+            if iter:
+                child = model.iter_children(iter)
+                if child:
+                    upnp_class = model.get(child, self.MS_UPNP_CLASS_COLUMN)[0]
+                    if upnp_class == 'placeholder':
+                        model.remove(child)
 
-            title = model.get(iter, self.MS_NAME_COLUMN)[0]
-            if title:
-                try:
-                    title = title[:title.rindex('(')]
-                    model.set_value(iter, self.MS_NAME_COLUMN,
-                                    "%s(%d)" % (title, int(r['TotalMatches'])))
-                except ValueError:
-                    pass
+                title = model.get(iter, self.MS_NAME_COLUMN)[0]
+                if title:
+                    try:
+                        title = title[:title.rindex('(')]
+                        model.set_value(iter, self.MS_NAME_COLUMN,
+                                        "%s(%d)" % (title, int(r['TotalMatches'])))
+                    except ValueError:
+                        pass
             elt = parse_xml(r['Result'], 'utf-8')
             elt = elt.getroot()
             for child in elt:
@@ -218,7 +226,7 @@ class MediaServerBrowseView(gtk.TreeView):
                 item = didl.getItems()[0]
                 if item.upnp_class.startswith('object.container'):
                     icon = self.folder_icon
-                    service = model.get(iter, self.MS_SERVICE_PATH_COLUMN)[0]
+                    #service = model.get(iter, self.MS_SERVICE_PATH_COLUMN)[0]
                     child_count = item.childCount
                     try:
                         title = "%s (%d)" % (item.title, item.childCount)
@@ -267,7 +275,7 @@ class MediaServerBrowseView(gtk.TreeView):
         d = action.call(ObjectID=object_id,BrowseFlag='BrowseDirectChildren',
                         StartingIndex=str(starting_index),RequestedCount=str(requested_count),
                         Filter='*',SortCriteria='')
-        d.addCallback(reply)
+        d.addCallback(reply,service)
         d.addErrback(self.handle_error)
         return d
 
