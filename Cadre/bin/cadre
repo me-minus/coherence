@@ -207,7 +207,7 @@ class Options(usage.Options):
                 ]
     optParameters = [['configfile', 'c', setConfigFile(), 'configfile'],
                      ['logfile', 'l', None, 'logfile'],
-                     ['option', 'o', None, 'activate option'],
+                     ['option', 'o', None, 'activate option (name and value separated by a colon (`:`)'],
                     ]
 
     def __init__(self):
