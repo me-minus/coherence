@@ -226,7 +226,7 @@ class Options(usage.Options):
 
     def opt_option(self,option):
         try:
-            key,value = option.split(':')
+            key, value = option.split(':', 1)
             self['options'][key] = value
         except:
             pass
