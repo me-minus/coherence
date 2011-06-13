@@ -272,6 +272,19 @@ if __name__ == '__main__':
             config.get('logging').get('level','none')
 
     grafics = config.get('grafics')
+    if grafics is None:
+        # backend not specified (or not config file), try to guess
+        try:
+            import pyglet
+            grafics = 'pyglet'
+        except:
+            try:
+                import clutter
+                grafics = 'clutter'
+            except:
+                raise SystemExit('Sorry, not supported rendering backend found.')
+        config['grafics'] = grafics
+
     if grafics == 'pyglet':
         from cadre.extern import pygletreactor
         pygletreactor.install()
