@@ -75,7 +75,8 @@ if __name__ == '__main__':
     parser.add_option('-o', '--option', action='callback',
                       dest='options',
                       default={}, callback=__opt_option, type='string',
-                      help='activate option (name and value separated by a colon (`:`)')
+                      help="activate option (name and value separated by a "
+                           "colon (`:`), may be given multiple times)")
 
     options, args = parser.parse_args()
     if args:
@@ -93,7 +94,7 @@ if __name__ == '__main__':
         except IOError:
             print "Config file %r not found, ignoring" % options.configfile
 
-    # copy options pass by -o/--option into config
+    # copy options passed by -o/--option into config
     config.update(dict(options.options))
 
     if options.logfile:
