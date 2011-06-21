@@ -73,7 +73,7 @@ if __name__ == '__main__':
                       help='configfile to use, default: %default')
     parser.add_option('-l', '--logfile', help='logfile to use')
     parser.add_option('-o', '--option', action='callback',
-                      dest='options',
+                      dest='options', metavar='NAME:VALUE',
                       default={}, callback=__opt_option, type='string',
                       help="activate option (name and value separated by a "
                            "colon (`:`), may be given multiple times)")
