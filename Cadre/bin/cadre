@@ -29,7 +29,7 @@ def daemonize():
     if os.fork():   # launch child and...
         os._exit(0) # kill off parent again.
     os.umask(077)
-    null=os.open('/dev/null', os.O_RDWR)
+    null = os.open('/dev/null', os.O_RDWR)
     for i in range(3):
         try:
             os.dup2(null, i)
@@ -40,15 +40,11 @@ def daemonize():
 
 
 def setConfigFile():
-    def findConfigDir():
-        try:
-            configDir = os.path.expanduser('~')
-        except:
-            configDir = os.getcwd()
-        return configDir
-
-    return os.path.join( findConfigDir(), '.cadre')
-
+    try:
+        configDir = os.path.expanduser('~')
+    except:
+        configDir = os.getcwd()
+    return os.path.join( configDir, '.cadre')
 
 def __opt_option(option, opt, value, parser):
     try:
@@ -58,10 +54,12 @@ def __opt_option(option, opt, value, parser):
         val = ''
     parser.values.options[key] = val
 
+
 def main(config):
 
     from cadre.base import Cadre
     c = Cadre(config)
+
 
 if __name__ == '__main__':
     import optparse
@@ -94,7 +92,6 @@ if __name__ == '__main__':
             config = Config(options.configfile, root='config').config
         except IOError:
             print "Config file %r not found, ignoring" % options.configfile
-            pass
 
     # copy options pass by -o/--option into config
     config.update(dict(options.options))
