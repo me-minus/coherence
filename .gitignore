@@ -1,0 +1,10 @@
+# standard excludes
+*~
+.\#*
+\#*#
+*.py[co]
+build
+dist
+*.egg
+*.egg-info
+*.egg-link
