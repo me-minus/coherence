@@ -29,9 +29,9 @@ class Puncher(object):
             if self.config.subOptions['internal-host'] == None:
                 raise Exception("internal-host parameter missing")
             if self.config.subOptions['internal-port'] == None:
-                raise("internal-port parameter missing")
+                raise Exception("internal-port parameter missing")
             if self.config.subOptions['protocol'].lower() not in ['tcp','udp']:
-                raise("protocol value invalid")
+                raise Exception("protocol value invalid")
             if self.config.subOptions['active'].lower() in ['y','true','1','yes']:
                 self.config.subOptions['active'] = True
             else:
@@ -45,9 +45,9 @@ class Puncher(object):
             if self.config.subOptions['remote-host'] == None:
                 raise Exception("remote-host parameter missing")
             if self.config.subOptions['external-port'] == None:
-                raise("external-port parameter missing")
+                raise Exception("external-port parameter missing")
             if self.config.subOptions['protocol'].lower() not in ['tcp','udp']:
-                raise("protocol value invalid")
+                raise Exception("protocol value invalid")
 
         coherence_config = {}
         coherence_config['logmode'] = 'none'
