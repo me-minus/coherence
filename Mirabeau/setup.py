@@ -23,9 +23,7 @@ packages = find_packages()
 setup(
     name="Mirabeau",
     version=__version__,
-    description="FILL ME",
-    long_description="""I make coffee too.
-""",
+    description="An application level proxy for UPnP devices",
     author="Philippe Normand and Frank Scholz",
     author_email='coherence@beebits.net',
     license = "MIT",
